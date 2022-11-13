@@ -86,7 +86,6 @@ import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.storage.StorageRecordUpdate
 import org.thoughtcrime.securesms.storage.StorageSyncHelper
 import org.thoughtcrime.securesms.storage.StorageSyncModels
-import org.thoughtcrime.securesms.stories.Stories.isFeatureFlagEnabled
 import org.thoughtcrime.securesms.util.Base64
 import org.thoughtcrime.securesms.util.FeatureFlags
 import org.thoughtcrime.securesms.util.GroupUtil
@@ -1163,11 +1162,8 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
    * @return All storage IDs for synced records, excluding the ones that need to be deleted.
    */
   fun getContactStorageSyncIdsMap(): Map<RecipientId, StorageId> {
-    val (inPart, args) = if (isFeatureFlagEnabled()) {
-      "(?, ?)" to SqlUtil.buildArgs(GroupType.NONE.id, Recipient.self().id, GroupType.SIGNAL_V1.id, GroupType.DISTRIBUTION_LIST.id)
-    } else {
-      "(?)" to SqlUtil.buildArgs(GroupType.NONE.id, Recipient.self().id, GroupType.SIGNAL_V1.id)
-    }
+    val inPart = "(?, ?)"
+    val args = SqlUtil.buildArgs(GroupType.NONE.id, Recipient.self().id, GroupType.SIGNAL_V1.id, GroupType.DISTRIBUTION_LIST.id)
 
     val query = """
       $STORAGE_SERVICE_ID NOT NULL AND (
@@ -2279,7 +2275,7 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
     db.beginTransaction()
     try {
       for ((e164, result) in mapping) {
-        ids += processPnpTuple(e164, result.pni, result.aci, false).finalId
+        ids += getAndPossiblyMerge(serviceId = result.aci, pni = result.pni, e164 = e164, pniVerified = false, changeSelf = false)
       }
 
       db.setTransactionSuccessful()
@@ -2445,8 +2441,11 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
           Log.w(TAG, "Session switchover events aren't implemented yet!")
         }
         is PnpOperation.ChangeNumberInsert -> {
-          // TODO [pnp]
-          Log.w(TAG, "Change number inserts aren't implemented yet!")
+          if (changeSet.id is PnpIdResolver.PnpNoopId) {
+            SignalDatabase.sms.insertNumberChangeMessages(changeSet.id.recipientId)
+          } else {
+            throw IllegalStateException("There's a change number event on a newly-inserted recipient?")
+          }
         }
       }
     }
@@ -2649,7 +2648,7 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
       )
     }
 
-    if (record.e164 != null && updatedNumber) {
+    if (record.e164 != null && updatedNumber && notSelf(e164, pni, aci) && !record.isBlocked) {
       operations += PnpOperation.ChangeNumberInsert(
         recipientId = commonId,
         oldE164 = record.e164,
@@ -2762,7 +2761,7 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
         secondaryId = data.byPniSid
       )
 
-      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164) {
+      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164 && notSelf(e164, pni, aci) && !data.aciSidRecord.isBlocked) {
         operations += PnpOperation.ChangeNumberInsert(
           recipientId = data.byAciSid,
           oldE164 = data.aciSidRecord.e164,
@@ -2788,7 +2787,7 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
           e164 = e164
         )
 
-        if (data.aciSidRecord.e164 != null) {
+        if (data.aciSidRecord.e164 != null && notSelf(e164, pni, aci) && !data.aciSidRecord.isBlocked) {
           operations += PnpOperation.ChangeNumberInsert(
             recipientId = data.byAciSid,
             oldE164 = data.aciSidRecord.e164,
@@ -2829,7 +2828,7 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
         secondaryId = data.byE164
       )
 
-      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164) {
+      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164 && notSelf(e164, pni, aci) && !data.aciSidRecord.isBlocked) {
         operations += PnpOperation.ChangeNumberInsert(
           recipientId = data.byAciSid,
           oldE164 = data.aciSidRecord.e164,
@@ -2854,7 +2853,7 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
         secondaryId = data.byE164
       )
 
-      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164) {
+      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164 && notSelf(e164, pni, aci) && !data.aciSidRecord.isBlocked) {
         operations += PnpOperation.ChangeNumberInsert(
           recipientId = data.byAciSid,
           oldE164 = data.aciSidRecord.e164,
@@ -2872,7 +2871,7 @@ open class RecipientDatabase(context: Context, databaseHelper: SignalDatabase) :
         e164 = e164
       )
 
-      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164) {
+      if (data.aciSidRecord.e164 != null && data.aciSidRecord.e164 != e164 && notSelf(e164, pni, aci) && !data.aciSidRecord.isBlocked) {
         operations += PnpOperation.ChangeNumberInsert(
           recipientId = data.byAciSid,
           oldE164 = data.aciSidRecord.e164,

@@ -16,6 +16,7 @@ import org.thoughtcrime.securesms.components.settings.DSLSettingsIcon
 import org.thoughtcrime.securesms.components.settings.DSLSettingsText
 import org.thoughtcrime.securesms.components.settings.NO_TINT
 import org.thoughtcrime.securesms.components.settings.app.subscription.DonationPaymentComponent
+import org.thoughtcrime.securesms.components.settings.app.subscription.InAppDonations
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonateToSignalType
 import org.thoughtcrime.securesms.components.settings.app.subscription.models.GooglePayButton
 import org.thoughtcrime.securesms.components.settings.configure
@@ -33,7 +34,7 @@ class GatewaySelectorBottomSheet : DSLSettingsBottomSheetFragment() {
   private val args: GatewaySelectorBottomSheetArgs by navArgs()
 
   private val viewModel: GatewaySelectorViewModel by viewModels(factoryProducer = {
-    GatewaySelectorViewModel.Factory(args, requireListener<DonationPaymentComponent>().donationPaymentRepository)
+    GatewaySelectorViewModel.Factory(args, requireListener<DonationPaymentComponent>().stripeRepository)
   })
 
   override fun bindAdapter(adapter: DSLSettingsAdapter) {
@@ -63,7 +64,7 @@ class GatewaySelectorBottomSheet : DSLSettingsBottomSheetFragment() {
         DonateToSignalType.ONE_TIME -> presentOneTimeText()
       }
 
-      space(68.dp)
+      space(66.dp)
 
       if (state.isGooglePayAvailable) {
         customPref(
@@ -81,7 +82,7 @@ class GatewaySelectorBottomSheet : DSLSettingsBottomSheetFragment() {
       // PayPal
 
       // Credit Card
-      if (state.isCreditCardAvailable) {
+      if (InAppDonations.isCreditCardAvailable()) {
         space(12.dp)
 
         primaryButton(

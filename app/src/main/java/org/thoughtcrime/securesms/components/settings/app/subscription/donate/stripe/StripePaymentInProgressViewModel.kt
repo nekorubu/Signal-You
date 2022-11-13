@@ -13,8 +13,12 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import org.signal.core.util.logging.Log
 import org.signal.donations.GooglePayPaymentSource
 import org.signal.donations.StripeApi
-import org.thoughtcrime.securesms.components.settings.app.subscription.DonationPaymentRepository
+import org.signal.donations.StripeIntentAccessor
+import org.thoughtcrime.securesms.components.settings.app.subscription.MonthlyDonationRepository
+import org.thoughtcrime.securesms.components.settings.app.subscription.OneTimeDonationRepository
+import org.thoughtcrime.securesms.components.settings.app.subscription.StripeRepository
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonateToSignalType
+import org.thoughtcrime.securesms.components.settings.app.subscription.donate.DonationProcessorStage
 import org.thoughtcrime.securesms.components.settings.app.subscription.donate.gateway.GatewayRequest
 import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationError
 import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationErrorSource
@@ -27,15 +31,17 @@ import org.whispersystems.signalservice.api.subscriptions.SubscriptionLevels
 import org.whispersystems.signalservice.api.util.Preconditions
 
 class StripePaymentInProgressViewModel(
-  private val donationPaymentRepository: DonationPaymentRepository
+  private val stripeRepository: StripeRepository,
+  private val monthlyDonationRepository: MonthlyDonationRepository,
+  private val oneTimeDonationRepository: OneTimeDonationRepository
 ) : ViewModel() {
 
   companion object {
     private val TAG = Log.tag(StripePaymentInProgressViewModel::class.java)
   }
 
-  private val store = RxStore(StripeStage.INIT)
-  val state: Flowable<StripeStage> = store.stateFlowable.observeOn(AndroidSchedulers.mainThread())
+  private val store = RxStore(DonationProcessorStage.INIT)
+  val state: Flowable<DonationProcessorStage> = store.stateFlowable.observeOn(AndroidSchedulers.mainThread())
 
   private val disposables = CompositeDisposable()
   private var paymentData: PaymentData? = null
@@ -58,11 +64,11 @@ class StripePaymentInProgressViewModel(
     Preconditions.checkState(store.state.isTerminal)
 
     Log.d(TAG, "Ending current state. Clearing state and setting stage to INIT", true)
-    store.update { StripeStage.INIT }
+    store.update { DonationProcessorStage.INIT }
     disposables.clear()
   }
 
-  fun processNewDonation(request: GatewayRequest, nextActionHandler: (StripeApi.Secure3DSAction) -> Completable) {
+  fun processNewDonation(request: GatewayRequest, nextActionHandler: (StripeApi.Secure3DSAction) -> Single<StripeIntentAccessor>) {
     Log.d(TAG, "Proceeding with donation...", true)
 
     val errorSource = when (request.donateToSignalType) {
@@ -86,7 +92,7 @@ class StripePaymentInProgressViewModel(
       paymentData == null && cardData == null -> error("No payment provider available.")
       paymentData != null && cardData != null -> error("Too many providers available")
       paymentData != null -> Single.just<StripeApi.PaymentSource>(GooglePayPaymentSource(paymentData))
-      cardData != null -> donationPaymentRepository.createCreditCardPaymentSource(errorSource, cardData)
+      cardData != null -> stripeRepository.createCreditCardPaymentSource(errorSource, cardData)
       else -> error("This should never happen.")
     }.doAfterTerminate { clearPaymentInformation() }
   }
@@ -112,25 +118,29 @@ class StripePaymentInProgressViewModel(
     cardData = null
   }
 
-  private fun proceedMonthly(request: GatewayRequest, paymentSourceProvider: Single<StripeApi.PaymentSource>, nextActionHandler: (StripeApi.Secure3DSAction) -> Completable) {
-    val ensureSubscriberId: Completable = donationPaymentRepository.ensureSubscriberId()
-    val createAndConfirmSetupIntent: Single<StripeApi.Secure3DSAction> = paymentSourceProvider.flatMap { donationPaymentRepository.createAndConfirmSetupIntent(it) }
-    val setLevel: Completable = donationPaymentRepository.setSubscriptionLevel(request.level.toString())
+  private fun proceedMonthly(request: GatewayRequest, paymentSourceProvider: Single<StripeApi.PaymentSource>, nextActionHandler: (StripeApi.Secure3DSAction) -> Single<StripeIntentAccessor>) {
+    val ensureSubscriberId: Completable = monthlyDonationRepository.ensureSubscriberId()
+    val createAndConfirmSetupIntent: Single<StripeApi.Secure3DSAction> = paymentSourceProvider.flatMap { stripeRepository.createAndConfirmSetupIntent(it) }
+    val setLevel: Completable = monthlyDonationRepository.setSubscriptionLevel(request.level.toString())
 
     Log.d(TAG, "Starting subscription payment pipeline...", true)
-    store.update { StripeStage.PAYMENT_PIPELINE }
+    store.update { DonationProcessorStage.PAYMENT_PIPELINE }
 
     val setup: Completable = ensureSubscriberId
-      .andThen(cancelActiveSubscriptionIfNecessary())
+      .andThen(monthlyDonationRepository.cancelActiveSubscriptionIfNecessary())
       .andThen(createAndConfirmSetupIntent)
-      .flatMap { secure3DSAction -> nextActionHandler(secure3DSAction).andThen(Single.just(secure3DSAction.paymentMethodId!!)) }
-      .flatMapCompletable { donationPaymentRepository.setDefaultPaymentMethod(it) }
+      .flatMap { secure3DSAction ->
+        nextActionHandler(secure3DSAction)
+          .flatMap { secure3DSResult -> stripeRepository.getStatusAndPaymentMethodId(secure3DSResult) }
+          .map { (_, paymentMethod) -> paymentMethod ?: secure3DSAction.paymentMethodId!! }
+      }
+      .flatMapCompletable { stripeRepository.setDefaultPaymentMethod(it) }
       .onErrorResumeNext { Completable.error(DonationError.getPaymentSetupError(DonationErrorSource.SUBSCRIPTION, it)) }
 
     disposables += setup.andThen(setLevel).subscribeBy(
       onError = { throwable ->
         Log.w(TAG, "Failure in subscription payment pipeline...", throwable, true)
-        store.update { StripeStage.FAILED }
+        store.update { DonationProcessorStage.FAILED }
 
         val donationError: DonationError = if (throwable is DonationError) {
           throwable
@@ -141,29 +151,15 @@ class StripePaymentInProgressViewModel(
       },
       onComplete = {
         Log.d(TAG, "Finished subscription payment pipeline...", true)
-        store.update { StripeStage.COMPLETE }
+        store.update { DonationProcessorStage.COMPLETE }
       }
     )
-  }
-
-  private fun cancelActiveSubscriptionIfNecessary(): Completable {
-    return Single.just(SignalStore.donationsValues().shouldCancelSubscriptionBeforeNextSubscribeAttempt).flatMapCompletable {
-      if (it) {
-        Log.d(TAG, "Cancelling active subscription...", true)
-        donationPaymentRepository.cancelActiveSubscription().doOnComplete {
-          SignalStore.donationsValues().updateLocalStateForManualCancellation()
-          MultiDeviceSubscriptionSyncRequestJob.enqueue()
-        }
-      } else {
-        Completable.complete()
-      }
-    }
   }
 
   private fun proceedOneTime(
     request: GatewayRequest,
     paymentSourceProvider: Single<StripeApi.PaymentSource>,
-    nextActionHandler: (StripeApi.Secure3DSAction) -> Completable
+    nextActionHandler: (StripeApi.Secure3DSAction) -> Single<StripeIntentAccessor>
   ) {
     Log.w(TAG, "Beginning one-time payment pipeline...", true)
 
@@ -171,17 +167,18 @@ class StripePaymentInProgressViewModel(
     val recipient = Recipient.self().id
     val level = SubscriptionLevels.BOOST_LEVEL.toLong()
 
-    val continuePayment: Single<StripeApi.PaymentIntent> = donationPaymentRepository.continuePayment(amount, recipient, level)
-    val intentAndSource: Single<Pair<StripeApi.PaymentIntent, StripeApi.PaymentSource>> = Single.zip(continuePayment, paymentSourceProvider, ::Pair)
+    val continuePayment: Single<StripeIntentAccessor> = stripeRepository.continuePayment(amount, recipient, level)
+    val intentAndSource: Single<Pair<StripeIntentAccessor, StripeApi.PaymentSource>> = Single.zip(continuePayment, paymentSourceProvider, ::Pair)
 
     disposables += intentAndSource.flatMapCompletable { (paymentIntent, paymentSource) ->
-      donationPaymentRepository.confirmPayment(paymentSource, paymentIntent, recipient)
-        .flatMapCompletable { nextActionHandler(it) }
-        .andThen(donationPaymentRepository.waitForOneTimeRedemption(amount, paymentIntent, recipient, null, level))
+      stripeRepository.confirmPayment(paymentSource, paymentIntent, recipient)
+        .flatMap { nextActionHandler(it) }
+        .flatMap { stripeRepository.getStatusAndPaymentMethodId(it) }
+        .flatMapCompletable { oneTimeDonationRepository.waitForOneTimeRedemption(amount, paymentIntent.intentId, recipient, null, level) }
     }.subscribeBy(
       onError = { throwable ->
         Log.w(TAG, "Failure in one-time payment pipeline...", throwable, true)
-        store.update { StripeStage.FAILED }
+        store.update { DonationProcessorStage.FAILED }
 
         val donationError: DonationError = if (throwable is DonationError) {
           throwable
@@ -192,7 +189,7 @@ class StripePaymentInProgressViewModel(
       },
       onComplete = {
         Log.w(TAG, "Completed one-time payment pipeline...", true)
-        store.update { StripeStage.COMPLETE }
+        store.update { DonationProcessorStage.COMPLETE }
       }
     )
   }
@@ -200,18 +197,18 @@ class StripePaymentInProgressViewModel(
   fun cancelSubscription() {
     Log.d(TAG, "Beginning cancellation...", true)
 
-    store.update { StripeStage.CANCELLING }
-    disposables += donationPaymentRepository.cancelActiveSubscription().subscribeBy(
+    store.update { DonationProcessorStage.CANCELLING }
+    disposables += monthlyDonationRepository.cancelActiveSubscription().subscribeBy(
       onComplete = {
         Log.d(TAG, "Cancellation succeeded", true)
         SignalStore.donationsValues().updateLocalStateForManualCancellation()
         MultiDeviceSubscriptionSyncRequestJob.enqueue()
-        donationPaymentRepository.scheduleSyncForAccountRecordChange()
-        store.update { StripeStage.COMPLETE }
+        stripeRepository.scheduleSyncForAccountRecordChange()
+        store.update { DonationProcessorStage.COMPLETE }
       },
       onError = { throwable ->
         Log.w(TAG, "Cancellation failed", throwable, true)
-        store.update { StripeStage.FAILED }
+        store.update { DonationProcessorStage.FAILED }
       }
     )
   }
@@ -219,12 +216,12 @@ class StripePaymentInProgressViewModel(
   fun updateSubscription(request: GatewayRequest) {
     Log.d(TAG, "Beginning subscription update...", true)
 
-    store.update { StripeStage.PAYMENT_PIPELINE }
-    disposables += cancelActiveSubscriptionIfNecessary().andThen(donationPaymentRepository.setSubscriptionLevel(request.level.toString()))
+    store.update { DonationProcessorStage.PAYMENT_PIPELINE }
+    disposables += monthlyDonationRepository.cancelActiveSubscriptionIfNecessary().andThen(monthlyDonationRepository.setSubscriptionLevel(request.level.toString()))
       .subscribeBy(
         onComplete = {
           Log.w(TAG, "Completed subscription update", true)
-          store.update { StripeStage.COMPLETE }
+          store.update { DonationProcessorStage.COMPLETE }
         },
         onError = { throwable ->
           Log.w(TAG, "Failed to update subscription", throwable, true)
@@ -235,16 +232,18 @@ class StripePaymentInProgressViewModel(
           }
           DonationError.routeDonationError(ApplicationDependencies.getApplication(), donationError)
 
-          store.update { StripeStage.FAILED }
+          store.update { DonationProcessorStage.FAILED }
         }
       )
   }
 
   class Factory(
-    private val donationPaymentRepository: DonationPaymentRepository
+    private val stripeRepository: StripeRepository,
+    private val monthlyDonationRepository: MonthlyDonationRepository = MonthlyDonationRepository(ApplicationDependencies.getDonationsService()),
+    private val oneTimeDonationRepository: OneTimeDonationRepository = OneTimeDonationRepository(ApplicationDependencies.getDonationsService())
   ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-      return modelClass.cast(StripePaymentInProgressViewModel(donationPaymentRepository)) as T
+      return modelClass.cast(StripePaymentInProgressViewModel(stripeRepository, monthlyDonationRepository, oneTimeDonationRepository)) as T
     }
   }
 }

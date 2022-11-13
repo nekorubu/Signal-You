@@ -79,6 +79,7 @@ import org.thoughtcrime.securesms.mms.OutgoingExpirationUpdateMessage;
 import org.thoughtcrime.securesms.mms.OutgoingGroupUpdateMessage;
 import org.thoughtcrime.securesms.mms.OutgoingMediaMessage;
 import org.thoughtcrime.securesms.mms.OutgoingPaymentsActivatedMessages;
+import org.thoughtcrime.securesms.mms.OutgoingPaymentsNotificationMessage;
 import org.thoughtcrime.securesms.mms.OutgoingRequestToActivatePaymentMessages;
 import org.thoughtcrime.securesms.mms.OutgoingSecureMediaMessage;
 import org.thoughtcrime.securesms.mms.QuoteModel;
@@ -109,6 +110,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -572,7 +574,7 @@ public class MmsDatabase extends MessageDatabase {
   }
 
   @Override
-  public void insertNumberChangeMessages(@NonNull Recipient recipient) {
+  public void insertNumberChangeMessages(@NonNull RecipientId recipientId) {
     throw new UnsupportedOperationException();
   }
 
@@ -1796,7 +1798,9 @@ public class MmsDatabase extends MessageDatabase {
           return new OutgoingGroupUpdateMessage(recipient, new MessageGroupContext(body, Types.isGroupV2(outboxType)), attachments, timestamp, 0, false, quote, contacts, previews, mentions);
         } else if (Types.isExpirationTimerUpdate(outboxType)) {
           return new OutgoingExpirationUpdateMessage(recipient, timestamp, expiresIn);
-        } else if (Types.isRequestToActivatePayments(outboxType)) {
+        } else if (Types.isPaymentsNotification(outboxType)) {
+          return new OutgoingPaymentsNotificationMessage(recipient, Objects.requireNonNull(body), timestamp, expiresIn);
+        } else if (Types.isPaymentsRequestToActivate(outboxType)) {
           return new OutgoingRequestToActivatePaymentMessages(recipient, timestamp, expiresIn);
         } else if (Types.isPaymentsActivated(outboxType)) {
           return new OutgoingPaymentsActivatedMessages(recipient, timestamp, expiresIn);
@@ -1995,7 +1999,7 @@ public class MmsDatabase extends MessageDatabase {
                                                     !keepThreadArchived);
 
     boolean isNotStoryGroupReply = retrieved.getParentStoryId() == null || !retrieved.getParentStoryId().isGroupReply();
-    if (!Types.isPaymentsActivated(mailbox) && !Types.isRequestToActivatePayments(mailbox) && !Types.isExpirationTimerUpdate(mailbox) && !retrieved.getStoryType().isStory() && isNotStoryGroupReply) {
+    if (!Types.isPaymentsActivated(mailbox) && !Types.isPaymentsRequestToActivate(mailbox) && !Types.isExpirationTimerUpdate(mailbox) && !retrieved.getStoryType().isStory() && isNotStoryGroupReply) {
       boolean incrementUnreadMentions = !retrieved.getMentions().isEmpty() && retrieved.getMentions().stream().anyMatch(m -> m.getRecipientId().equals(Recipient.self().getId()));
       SignalDatabase.threads().incrementUnread(threadId, 1, incrementUnreadMentions ? 1 : 0);
       SignalDatabase.threads().update(threadId, !keepThreadArchived);
@@ -2021,8 +2025,12 @@ public class MmsDatabase extends MessageDatabase {
       type |= Types.EXPIRATION_TIMER_UPDATE_BIT;
     }
 
+    if (retrieved.isPaymentsNotification()) {
+      type |= Types.SPECIAL_TYPE_PAYMENTS_NOTIFICATION;
+    }
+
     if (retrieved.isActivatePaymentsRequest()) {
-      type |= Types.SPECIAL_TYPE_ACTIVATE_PAYMENTS_REQUEST;
+      type |= Types.SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST;
     }
 
     if (retrieved.isPaymentsActivated()) {
@@ -2060,11 +2068,18 @@ public class MmsDatabase extends MessageDatabase {
       type |= Types.SPECIAL_TYPE_GIFT_BADGE;
     }
 
+    if (retrieved.isPaymentsNotification()) {
+      if (hasSpecialType) {
+        throw new MmsException("Cannot insert message with multiple special types.");
+      }
+      type |= Types.SPECIAL_TYPE_PAYMENTS_NOTIFICATION;
+    }
+
     if (retrieved.isActivatePaymentsRequest()) {
       if (hasSpecialType) {
         throw new MmsException("Cannot insert message with multiple special types.");
       }
-      type |= Types.SPECIAL_TYPE_ACTIVATE_PAYMENTS_REQUEST;
+      type |= Types.SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST;
     }
 
     if (retrieved.isPaymentsActivated()) {
@@ -2241,11 +2256,18 @@ public class MmsDatabase extends MessageDatabase {
       type |= Types.SPECIAL_TYPE_GIFT_BADGE;
     }
 
+    if (message.isPaymentsNotification()) {
+      if (hasSpecialType) {
+        throw new MmsException("Cannot insert message with multiple special types.");
+      }
+      type |= Types.SPECIAL_TYPE_PAYMENTS_NOTIFICATION;
+    }
+
     if (message.isRequestToActivatePayments()) {
       if (hasSpecialType) {
         throw new MmsException("Cannot insert message with multiple special types.");
       }
-      type |= Types.SPECIAL_TYPE_ACTIVATE_PAYMENTS_REQUEST;
+      type |= Types.SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST;
     }
 
     if (message.isPaymentsActivated()) {
@@ -2669,6 +2691,17 @@ public class MmsDatabase extends MessageDatabase {
   }
 
   @Override
+  public void deleteRemotelyDeletedStory(long messageId) {
+    try (Cursor cursor = getMessageCursor(messageId)) {
+      if (cursor.moveToFirst() && CursorUtil.requireBoolean(cursor, REMOTE_DELETED)) {
+        deleteMessage(messageId);
+      } else {
+        Log.i(TAG, "Unable to delete remotely deleted story: " + messageId);
+      }
+    }
+  }
+
+  @Override
   public List<MessageRecord> getMessagesInThreadAfterInclusive(long threadId, long timestamp, long limit) {
     String   where = TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? AND " +
                      TABLE_NAME + "." + getDateReceivedColumnName() + " >= ?";
@@ -2847,7 +2880,8 @@ public class MmsDatabase extends MessageDatabase {
                                        null,
                                        message.getStoryType(),
                                        message.getParentStoryId(),
-                                       message.getGiftBadge());
+                                       message.getGiftBadge(),
+                                       null);
     }
   }
 
@@ -3036,7 +3070,7 @@ public class MmsDatabase extends MessageDatabase {
                                        networkFailures, subscriptionId, expiresIn, expireStarted,
                                        isViewOnce, readReceiptCount, quote, contacts, previews, unidentified, Collections.emptyList(),
                                        remoteDelete, mentionsSelf, notifiedTimestamp, viewedReceiptCount, receiptTimestamp, messageRanges,
-                                       storyType, parentStoryId, giftBadge);
+                                       storyType, parentStoryId, giftBadge, null);
     }
 
     private Set<IdentityKeyMismatch> getMismatchedIdentities(String document) {
