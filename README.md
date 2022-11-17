@@ -3,6 +3,8 @@ This is a personal fork of [a fork](https://github.com/johanw666/Signal-Android)
 - AMOLED Dark Theme
 - Material You theming on Android 12+
 
+This also acts as a way for me to learn some Android development with an app that I actively use.
+
 ## TODO:
 - [ ] Build and sign an APK
 - [ ] Improve Material You theming
