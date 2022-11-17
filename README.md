@@ -6,7 +6,7 @@ This is a personal fork of [a fork](https://github.com/johanw666/Signal-Android)
 This also acts as a way for me to learn some Android development with an app that I actively use.
 
 ## TODO:
-- [ ] Build and sign an APK
+- [x] Build and sign an APK
 - [ ] Improve Material You theming
     - [ ] Make it a separate, toggleable theme, rather than on by default
     - [ ] Make a version for Light theme
