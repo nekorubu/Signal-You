@@ -3196,6 +3196,12 @@ public final class MessageContentProcessor {
           return groupRecord.isPresent() && groupRecord.get().isAnnouncementGroup() && !groupRecord.get().getAdmins().contains(sender);
         }
       }
+    } else if (content.getStoryMessage().isPresent()) {
+      if (conversation.isGroup() && conversation.isBlocked()) {
+        return true;
+      } else {
+        return sender.isBlocked();
+      }
     }
 
     return false;
