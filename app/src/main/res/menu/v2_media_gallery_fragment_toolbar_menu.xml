@@ -4,10 +4,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:title="@string/MediaPickerActivity__menu_open_camera"
         android:id="@+id/action_camera"
-        android:visible="true"
+        android:enabled="false"
         android:icon="@drawable/ic_camera_24"
+        android:title="@string/MediaPickerActivity__menu_open_camera"
         app:showAsAction="always" />
 
 </menu>

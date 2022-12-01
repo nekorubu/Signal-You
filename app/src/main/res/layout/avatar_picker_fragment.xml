@@ -48,6 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="32dp"
+                android:visibility="visible"
                 app:bsiv_icon="@drawable/ic_camera_24"
                 app:bsiv_icon_contentDescription="@string/AvatarPickerFragment__take_a_picture"
                 app:bsiv_label="@string/AvatarPickerFragment__camera"

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_edit"
-        android:icon="@drawable/ic_compose_tinted_24"
+        android:icon="@drawable/phosphor_pencil_simple_tinted"
         android:title="@string/NotificationProfileDetails__edit_notification_profile"
         app:showAsAction="always" />
 </menu>
