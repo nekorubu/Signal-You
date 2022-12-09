@@ -112,7 +112,7 @@
                 android:transitionName="camera_fab"
                 android:visibility="gone"
                 app:backgroundTint="@color/signal_colorSurfaceVariant"
-                app:srcCompat="@drawable/ic_camera_outline_24"
+                app:srcCompat="@drawable/phosphor_camera_outline"
                 app:tint="@color/signal_colorOnSurface"
                 tools:visibility="visible" />
 
@@ -128,7 +128,7 @@
                 android:transitionName="new_convo_fab"
                 android:visibility="gone"
                 app:backgroundTint="@color/signal_colorPrimaryContainer"
-                app:srcCompat="@drawable/ic_compose_outline_24"
+                app:srcCompat="@drawable/phosphor_pencil_simple_outline"
                 app:tint="@color/signal_colorOnSurface"
                 tools:visibility="visible" />
 
