@@ -532,6 +532,7 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         handleMarkAllRead(); return true;
       case R.id.menu_invite:
         handleInvite(); return true;
+      case R.id.menu_import_export: handleImportExport(); return true; // JW: added
       case R.id.menu_insights:
         handleInsights(); return true;
       case R.id.menu_notification_profile:

@@ -221,7 +221,7 @@
                 app:layout_constraintBottom_toBottomOf="@id/manage_profile_about_subtitle"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@id/manage_profile_about"
-                app:srcCompat="@drawable/ic_compose_24"
+                app:srcCompat="@drawable/phosphor_pencil_simple"
                 app:tint="@color/signal_text_primary" />
 
             <org.thoughtcrime.securesms.components.emoji.EmojiTextView
