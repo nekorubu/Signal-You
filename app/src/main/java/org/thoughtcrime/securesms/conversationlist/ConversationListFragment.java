@@ -541,7 +541,6 @@ public class ConversationListFragment extends MainFragment implements ActionMode
         handleNotificationProfile(); return true;
       case R.id.menu_filter_unread_chats:
         handleFilterUnreadChats(); return true;
-      case R.id.menu_import_export: handleImportExport(); return true; // JW: added
     }
 
     return false;
