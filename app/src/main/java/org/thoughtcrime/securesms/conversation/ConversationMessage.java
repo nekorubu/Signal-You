@@ -17,6 +17,7 @@ import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.Mention;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList;
+import org.thoughtcrime.securesms.util.MessageRecordUtil;
 
 import java.security.MessageDigest;
 import java.util.Collections;
@@ -33,10 +34,6 @@ public class ConversationMessage {
   @NonNull  private final MultiselectCollection  multiselectCollection;
   @NonNull  private final MessageStyler.Result   styleResult;
             private final boolean                hasBeenQuoted;
-
-  private ConversationMessage(@NonNull MessageRecord messageRecord) {
-    this(messageRecord, null, null, false);
-  }
 
   private ConversationMessage(@NonNull MessageRecord messageRecord, boolean hasBeenQuoted) {
     this(messageRecord, null, null, hasBeenQuoted);
@@ -120,6 +117,12 @@ public class ConversationMessage {
     return styleResult.getBottomButton();
   }
 
+  public boolean isTextOnly(@NonNull Context context) {
+    return MessageRecordUtil.isTextOnly(messageRecord, context) &&
+           !hasBeenQuoted() &&
+           getBottomButton() == null;
+  }
+
   /**
    * Factory providing multiple ways of creating {@link ConversationMessage}s.
    */
@@ -158,9 +161,7 @@ public class ConversationMessage {
      * @param mentions List of placeholder mentions to be used to update the body in the provided MessageRecord.
      */
     @WorkerThread
-    public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord, @Nullable List<Mention> mentions) {
-      boolean hasBeenQuoted = SignalDatabase.mmsSms().isQuoted(messageRecord);
-
+    public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord, @Nullable List<Mention> mentions, boolean hasBeenQuoted) {
       if (messageRecord.isMms() && mentions != null && !mentions.isEmpty()) {
         MentionUtil.UpdatedBodyAndMentions updated = MentionUtil.updateBodyAndMentionsWithDisplayNames(context, messageRecord, mentions);
         return new ConversationMessage(messageRecord, updated.getBody(), updated.getMentions(), hasBeenQuoted);
@@ -185,7 +186,7 @@ public class ConversationMessage {
      */
     @WorkerThread
     public static @NonNull ConversationMessage createWithUnresolvedData(@NonNull Context context, @NonNull MessageRecord messageRecord, @NonNull CharSequence body) {
-      boolean hasBeenQuoted = SignalDatabase.mmsSms().isQuoted(messageRecord);
+      boolean hasBeenQuoted = SignalDatabase.messages().isQuoted(messageRecord);
 
       if (messageRecord.isMms()) {
         List<Mention> mentions = SignalDatabase.mentions().getMentionsForMessage(messageRecord.getId());

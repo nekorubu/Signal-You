@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.jobmanager.JobTracker
 import org.thoughtcrime.securesms.jobs.DownloadLatestEmojiDataJob
 import org.thoughtcrime.securesms.jobs.EmojiSearchIndexDownloadJob
+import org.thoughtcrime.securesms.jobs.PnpInitializeDevicesJob
 import org.thoughtcrime.securesms.jobs.RefreshAttributesJob
 import org.thoughtcrime.securesms.jobs.RefreshOwnProfileJob
 import org.thoughtcrime.securesms.jobs.RemoteConfigRefreshJob
@@ -43,6 +44,7 @@ import org.thoughtcrime.securesms.megaphone.Megaphones
 import org.thoughtcrime.securesms.payments.DataExportUtil
 import org.thoughtcrime.securesms.storage.StorageSyncHelper
 import org.thoughtcrime.securesms.util.ConversationUtil
+import org.thoughtcrime.securesms.util.FeatureFlags
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
 import java.util.Optional
@@ -357,11 +359,11 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       sectionHeaderPref(DSLSettingsText.from("Group call server"))
 
       radioPref(
-        title = DSLSettingsText.from("Default"),
+        title = DSLSettingsText.from("Production server"),
         summary = DSLSettingsText.from(BuildConfig.SIGNAL_SFU_URL),
         isChecked = state.callingServer == BuildConfig.SIGNAL_SFU_URL,
         onClick = {
-          viewModel.setInternalGroupCallingServer(null)
+          viewModel.setInternalGroupCallingServer(BuildConfig.SIGNAL_SFU_URL)
         }
       )
 
@@ -428,6 +430,16 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           title = DSLSettingsText.from("Set error state."),
           onClick = {
             findNavController().safeNavigate(InternalSettingsFragmentDirections.actionInternalSettingsFragmentToDonorErrorConfigurationFragment())
+          }
+        )
+
+        clickPref(
+          title = DSLSettingsText.from("Clear keep-alive timestamps"),
+          onClick = {
+            SignalStore.donationsValues().subscriptionEndOfPeriodRedemptionStarted = 0L
+            SignalStore.donationsValues().subscriptionEndOfPeriodConversionStarted = 0L
+            SignalStore.donationsValues().setLastEndOfPeriod(0L)
+            Toast.makeText(context, "Cleared", Toast.LENGTH_SHORT)
           }
         )
       }
@@ -513,6 +525,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
       )
 
       clickPref(
+        title = DSLSettingsText.from("Clear choose initial my story privacy state"),
+        isEnabled = true,
+        onClick = {
+          SignalStore.storyValues().userHasBeenNotifiedAboutStories = false
+        }
+      )
+
+      clickPref(
         title = DSLSettingsText.from("Clear first time navigation state"),
         isEnabled = true,
         onClick = {
@@ -526,6 +546,48 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
           findNavController().safeNavigate(InternalSettingsFragmentDirections.actionInternalSettingsFragmentToStoryDialogsLauncherFragment())
         }
       )
+
+      dividerPref()
+
+      sectionHeaderPref(DSLSettingsText.from("PNP"))
+
+      clickPref(
+        title = DSLSettingsText.from("Trigger No-Op Change Number"),
+        summary = DSLSettingsText.from("Mimics the 'Hello world' event"),
+        isEnabled = true,
+        onClick = {
+          SimpleTask.run(viewLifecycleOwner.lifecycle, {
+            ApplicationDependencies.getJobManager().runSynchronously(PnpInitializeDevicesJob(), 10.seconds.inWholeMilliseconds)
+          }, { state ->
+            if (state.isPresent) {
+              Toast.makeText(context, "Job finished with result: ${state.get()}!", Toast.LENGTH_SHORT).show()
+              viewModel.refresh()
+            } else {
+              Toast.makeText(context, "Job timed out after 10 seconds!", Toast.LENGTH_SHORT).show()
+            }
+          })
+        }
+      )
+
+      clickPref(
+        title = DSLSettingsText.from("Reset 'PNP initialized' state"),
+        summary = DSLSettingsText.from("Current initialized state: ${state.pnpInitialized}"),
+        isEnabled = state.pnpInitialized,
+        onClick = {
+          viewModel.resetPnpInitializedState()
+        }
+      )
+
+      if (FeatureFlags.chatFilters()) {
+        dividerPref()
+        sectionHeaderPref(DSLSettingsText.from("Chat Filters"))
+        clickPref(
+          title = DSLSettingsText.from("Reset pull to refresh tip count"),
+          onClick = {
+            SignalStore.uiHints().resetNeverDisplayPullToRefreshCount()
+          }
+        )
+      }
     }
   }
 

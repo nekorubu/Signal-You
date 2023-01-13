@@ -32,7 +32,7 @@ object FakeMessageRecords {
     hasData: Boolean = true,
     hasThumbnail: Boolean = true,
     contentType: String = MediaUtil.IMAGE_JPEG,
-    transferProgress: Int = AttachmentDatabase.TRANSFER_PROGRESS_DONE,
+    transferProgress: Int = AttachmentTable.TRANSFER_PROGRESS_DONE,
     size: Long = 0L,
     fileName: String = "",
     cdnNumber: Int = 1,
@@ -51,7 +51,7 @@ object FakeMessageRecords {
     stickerLocator: StickerLocator? = null,
     blurHash: BlurHash? = null,
     audioHash: AudioHash? = null,
-    transformProperties: AttachmentDatabase.TransformProperties? = null,
+    transformProperties: AttachmentTable.TransformProperties? = null,
     displayOrder: Int = 0,
     uploadTimestamp: Long = 200
   ): DatabaseAttachment {
@@ -115,7 +115,7 @@ object FakeMessageRecords {
     body: String = "body",
     slideDeck: SlideDeck = SlideDeck(),
     partCount: Int = slideDeck.slides.count(),
-    mailbox: Long = MmsSmsColumns.Types.BASE_INBOX_TYPE,
+    mailbox: Long = MessageTypes.BASE_INBOX_TYPE,
     mismatches: Set<IdentityKeyMismatch> = emptySet(),
     failures: Set<NetworkFailure> = emptySet(),
     subscriptionId: Int = -1,
@@ -137,7 +137,8 @@ object FakeMessageRecords {
     storyType: StoryType = StoryType.NONE,
     parentStoryId: ParentStoryId? = null,
     giftBadge: GiftBadge? = null,
-    payment: Payment? = null
+    payment: Payment? = null,
+    call: CallTable.Call? = null
   ): MediaMmsMessageRecord {
     return MediaMmsMessageRecord(
       id,
@@ -151,7 +152,6 @@ object FakeMessageRecords {
       threadId,
       body,
       slideDeck,
-      partCount,
       mailbox,
       mismatches,
       failures,
@@ -174,7 +174,8 @@ object FakeMessageRecords {
       storyType,
       parentStoryId,
       giftBadge,
-      payment
+      payment,
+      call
     )
   }
 }

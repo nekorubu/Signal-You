@@ -12,7 +12,7 @@ import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.attachments.AttachmentId;
 import org.thoughtcrime.securesms.attachments.DatabaseAttachment;
 import org.thoughtcrime.securesms.database.NoSuchMessageException;
-import org.thoughtcrime.securesms.database.MmsDatabase; // JW: added
+import org.thoughtcrime.securesms.database.MessageTable; // JW: added
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.jobmanager.impl.NotInCallConstraint;
@@ -71,15 +71,15 @@ public class AttachmentUtil {
     if (attachmentCount <= 1) {
       // JW: changed
       if (!TextSecurePreferences.isDeleteMediaOnly(context)) {
-        SignalDatabase.mms().deleteMessage(mmsId);
+        SignalDatabase.messages().deleteMessage(mmsId);
       }  else {
-        MmsDatabase mmsdb = (MmsDatabase)SignalDatabase.mms();
-        mmsdb.deleteAttachmentsOnly(mmsId);
+        SignalDatabase.messages().deleteAttachmentsOnly(mmsId);
       }
     } else {
       SignalDatabase.attachments().deleteAttachment(attachmentId);
     }
   }
+
 
   private static boolean isNonDocumentType(String contentType) {
     return
@@ -98,7 +98,7 @@ public class AttachmentUtil {
   @WorkerThread
   private static boolean isFromTrustedConversation(@NonNull Context context, @NonNull DatabaseAttachment attachment) {
     try {
-      MessageRecord message = SignalDatabase.mms().getMessageRecord(attachment.getMmsId());
+      MessageRecord message = SignalDatabase.messages().getMessageRecord(attachment.getMmsId());
 
       Recipient individualRecipient = message.getRecipient();
       Recipient threadRecipient     = SignalDatabase.threads().getRecipientForThreadId(message.getThreadId());

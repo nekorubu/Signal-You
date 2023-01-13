@@ -6,8 +6,8 @@ import org.thoughtcrime.securesms.contacts.paged.collections.ContactSearchCollec
 import org.thoughtcrime.securesms.contacts.paged.collections.ContactSearchIterator
 import org.thoughtcrime.securesms.contacts.paged.collections.CursorSearchIterator
 import org.thoughtcrime.securesms.contacts.paged.collections.StoriesSearchCollection
-import org.thoughtcrime.securesms.database.GroupDatabase.GroupRecord
 import org.thoughtcrime.securesms.database.model.DistributionListPrivacyMode
+import org.thoughtcrime.securesms.database.model.GroupRecord
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.keyvalue.StorySend
 import org.thoughtcrime.securesms.recipients.Recipient
@@ -241,7 +241,9 @@ class ContactSearchPagedDataSource(
     }
   }
 
-  private fun canSendToGroup(groupRecord: GroupRecord): Boolean {
+  private fun canSendToGroup(groupRecord: GroupRecord?): Boolean {
+    if (groupRecord == null) return false
+
     return if (groupRecord.isAnnouncementGroup) {
       groupRecord.isAdmin(Recipient.self())
     } else {

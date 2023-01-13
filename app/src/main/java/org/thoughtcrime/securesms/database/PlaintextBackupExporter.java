@@ -5,8 +5,6 @@ import android.content.Context;
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
-import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
-import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.util.FileUtilsJW;
 import org.thoughtcrime.securesms.util.StorageUtil;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
@@ -37,83 +35,46 @@ public class PlaintextBackupExporter {
   private static void exportPlaintext(Context context)
       throws NoExternalStorageException, IOException
   {
-    boolean testmmsexport = false;
-    SmsDatabase      database = (SmsDatabase)SignalDatabase.sms();
-    MmsDatabase      mmsdb    = (MmsDatabase)SignalDatabase.mms();
-    int              count    = database.getMessageCount();
-    int              mmscount = mmsdb.getMessageCount();
-    if (!testmmsexport) mmscount = 0;
-    XmlBackup.Writer writer   = new XmlBackup.Writer(getPlaintextExportFile().getAbsolutePath(), count + mmscount);
+    MessageTable     messagetable = SignalDatabase.messages();
+    int              count        = messagetable.getMessageCount();
+    XmlBackup.Writer writer       = new XmlBackup.Writer(getPlaintextExportFile().getAbsolutePath(), count);
 
-    SmsMessageRecord record;
-    MmsMessageRecord mmsrecord;
+    MessageRecord record;
 
-    SmsDatabase.Reader smsreader = null;
-    MmsDatabase.Reader mmsreader = null;
-    int                skip      = 0;
-    int                ROW_LIMIT = 500;
+    MessageTable.MmsReader messagereader = null;
+    int                    skip      = 0;
+    int                    ROW_LIMIT = 500;
 
     do {
-      if (smsreader != null)
-        smsreader.close();
+      if (messagereader != null)
+        messagereader.close();
 
-      smsreader = database.readerFor(database.getMessages(skip, ROW_LIMIT));
+      messagereader = messagetable.mmsReaderFor(messagetable.getMessages(skip, ROW_LIMIT));
 
-      while ((record = smsreader.getNext()) != null) {
-        XmlBackup.XmlBackupItem item =
-            new XmlBackup.XmlBackupItem(0,
-                                        record.getIndividualRecipient().getSmsAddress().orElse("null"),
-                                        record.getIndividualRecipient().getDisplayName(context),
-                                        record.getDateReceived(),
-                                        MmsSmsColumns.Types.translateToSystemBaseType(record.getType()),
-                                        null,
-                                        record.getDisplayBody(context).toString(),
-                                        null,
-                                        1,
-                                        record.getDeliveryStatus(),
-                                        getTransportType(record));
+      try {
+        while ((record = messagereader.getNext()) != null) {
+          XmlBackup.XmlBackupItem item =
+              new XmlBackup.XmlBackupItem(0,
+                                          record.getIndividualRecipient().getSmsAddress().orElse("null"),
+                                          record.getIndividualRecipient().getDisplayName(context),
+                                          record.getDateReceived(),
+                                          translateToSystemBaseType(record.getType()),
+                                          null,
+                                          record.getDisplayBody(context).toString(),
+                                          null,
+                                          1,
+                                          record.getDeliveryStatus(),
+                                          getTransportType(record));
 
-        writer.writeItem(item);
+          writer.writeItem(item);
+        }
+      }
+      catch (Exception e) {
+        Log.w(TAG, "messagereader.getNext() failed: " + e.getMessage());
       }
 
       skip += ROW_LIMIT;
-    } while (smsreader.getCount() > 0);
-
-    if(testmmsexport) {
-      int i = 0;
-      Log.w(TAG, "Number of mms to export: " + mmscount);
-
-      skip = 0;
-      do {
-        i++;
-        Log.w(TAG, "Exporting mms: " + i);
-
-        if (mmsreader != null)
-          mmsreader.close();
-
-        mmsreader = mmsdb.readerFor(mmsdb.getMessages(skip, ROW_LIMIT));
-        Log.w(TAG, "readerFor: skip = " + skip);
-
-        while ((mmsrecord = (MmsMessageRecord) mmsreader.getNext()) != null) {
-          XmlBackup.XmlBackupItem item =
-            new XmlBackup.XmlBackupItem(0,
-              mmsrecord.getIndividualRecipient().getSmsAddress().orElse("null"),
-              mmsrecord.getIndividualRecipient().getDisplayName(context),
-              mmsrecord.getDateReceived(),
-              MmsSmsColumns.Types.translateToSystemBaseType(mmsrecord.getType()),
-              null,
-              mmsrecord.getDisplayBody(context).toString(),
-              null,
-              1,
-              mmsrecord.getDeliveryStatus(),
-              getTransportType(mmsrecord));
-          Log.w(TAG, "mmsrecord exported: " + mmsrecord.getIndividualRecipient().getSmsAddress().orElse("null") + ": " + mmsrecord.getDisplayBody(context).toString());
-          writer.writeItem(item);
-        }
-
-        skip += ROW_LIMIT;
-      } while (mmsreader.getCount() > 0);
-    } // testmmsexport
+    } while (messagereader.getCount() > 0);
 
     writer.close();
 
@@ -123,7 +84,7 @@ public class PlaintextBackupExporter {
         test.delete();
       }
       FileUtilsJW.createEncryptedPlaintextZipfile(context, getPlaintextZipFile().getAbsolutePath(), getPlaintextExportFile().getAbsolutePath());
-      getPlaintextExportFile().delete(); // Insecure, leaves possiblyrecoverable plaintext on device
+      getPlaintextExportFile().delete(); // Insecure, leaves possibly recoverable plaintext on device
       // FileUtilsJW.secureDelete(getPlaintextExportFile()); // much too slow
     }
   }
@@ -142,5 +103,30 @@ public class PlaintextBackupExporter {
       transportText = "SMS";
     }
     return transportText;
+  }
+
+  public static int translateToSystemBaseType(long type) {
+    if (isInboxType(type)) return 1;
+    else if (isOutgoingMessageType(type)) return 2;
+    else if (isFailedMessageType(type)) return 5;
+
+    return 1;
+  }
+
+  public static boolean isInboxType(long type) {
+    return (type & MessageTypes.BASE_TYPE_MASK) == MessageTypes.BASE_INBOX_TYPE;
+  }
+
+  public static boolean isOutgoingMessageType(long type) {
+    for (long outgoingType : MessageTypes.OUTGOING_MESSAGE_TYPES) {
+      if ((type & MessageTypes.BASE_TYPE_MASK) == outgoingType)
+        return true;
+    }
+
+    return false;
+  }
+
+  public static boolean isFailedMessageType(long type) {
+    return (type & MessageTypes.BASE_TYPE_MASK) == MessageTypes.BASE_SENT_FAILED_TYPE;
   }
 }

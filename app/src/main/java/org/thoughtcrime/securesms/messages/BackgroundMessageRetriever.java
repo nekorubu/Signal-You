@@ -133,7 +133,7 @@ public class BackgroundMessageRetriever {
    */
   public static boolean shouldIgnoreFetch() {
     return ApplicationDependencies.getAppForegroundObserver().isForegrounded() &&
-           !ApplicationDependencies.getSignalServiceNetworkAccess().isCensored();
+           ApplicationDependencies.getSignalServiceNetworkAccess().supportsWebsockets();
   }
 
   private static String logSuffix(long startTime) {

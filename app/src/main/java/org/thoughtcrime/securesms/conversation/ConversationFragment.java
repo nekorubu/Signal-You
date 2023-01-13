@@ -109,10 +109,8 @@ import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectFor
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragmentArgs;
 import org.thoughtcrime.securesms.conversation.quotes.MessageQuotesBottomSheet;
 import org.thoughtcrime.securesms.conversation.ui.error.EnableCallNotificationSettingsDialog;
-import org.thoughtcrime.securesms.database.MessageDatabase;
-import org.thoughtcrime.securesms.database.MmsDatabase;
+import org.thoughtcrime.securesms.database.MessageTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
-import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.model.InMemoryMessageRecord;
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageId;
@@ -144,7 +142,7 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestState;
 import org.thoughtcrime.securesms.messagerequests.MessageRequestViewModel;
 import org.thoughtcrime.securesms.mms.AttachmentManager;
 import org.thoughtcrime.securesms.mms.GlideApp;
-import org.thoughtcrime.securesms.mms.OutgoingMediaMessage;
+import org.thoughtcrime.securesms.mms.OutgoingMessage;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.TextSlide;
@@ -165,7 +163,6 @@ import org.thoughtcrime.securesms.revealable.ViewOnceMessageActivity;
 import org.thoughtcrime.securesms.revealable.ViewOnceUtil;
 import org.thoughtcrime.securesms.safety.SafetyNumberBottomSheet;
 import org.thoughtcrime.securesms.sms.MessageSender;
-import org.thoughtcrime.securesms.sms.OutgoingTextMessage;
 import org.thoughtcrime.securesms.stickers.StickerLocator;
 import org.thoughtcrime.securesms.stickers.StickerPackPreviewActivity;
 import org.thoughtcrime.securesms.stories.Stories;
@@ -1052,7 +1049,9 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     builder.setTitle(getActivity().getResources().getQuantityString(R.plurals.ConversationFragment_delete_selected_messages, messagesCount, messagesCount));
     builder.setCancelable(true);
 
-    int deleteForMeResId = isNoteToSelfDelete(messageRecords) ? R.string.ConversationFragment_delete_on_this_device : R.string.ConversationFragment_delete_for_me;
+    boolean isNoteToSelfDelete = isNoteToSelfDelete(messageRecords);
+
+    int deleteForMeResId = isNoteToSelfDelete ? R.string.ConversationFragment_delete_on_this_device : R.string.ConversationFragment_delete_for_me;
     builder.setPositiveButton(deleteForMeResId, (dialog, which) -> {
       new ProgressDialogAsyncTask<Void, Void, Void>(getActivity(),
                                                     R.string.ConversationFragment_deleting,
@@ -1061,13 +1060,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
         @Override
         protected Void doInBackground(Void... voids) {
           for (MessageRecord messageRecord : messageRecords) {
-            boolean threadDeleted;
-
-            if (messageRecord.isMms()) {
-              threadDeleted = SignalDatabase.mms().deleteMessage(messageRecord.getId());
-            } else {
-              threadDeleted = SignalDatabase.sms().deleteMessage(messageRecord.getId());
-            }
+            boolean threadDeleted = SignalDatabase.messages().deleteMessage(messageRecord.getId());
 
             if (threadDeleted) {
               threadId = -1;
@@ -1082,9 +1075,9 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     });
 
-    int deleteForEveryoneResId = isNoteToSelfDelete(messageRecords) ? R.string.ConversationFragment_delete_everywhere : R.string.ConversationFragment_delete_for_everyone;
+    int deleteForEveryoneResId = isNoteToSelfDelete ? R.string.ConversationFragment_delete_everywhere : R.string.ConversationFragment_delete_for_everyone;
 
-    if (RemoteDeleteUtil.isValidSend(messageRecords, System.currentTimeMillis())) {
+    if (RemoteDeleteUtil.isValidSend(messageRecords, System.currentTimeMillis()) && (!isNoteToSelfDelete || TextSecurePreferences.isMultiDevice(requireContext()))) {
       builder.setNeutralButton(deleteForEveryoneResId, (dialog, which) -> handleDeleteForEveryone(messageRecords));
     }
 
@@ -1100,7 +1093,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     Runnable deleteForEveryone = () -> {
       SignalExecutors.BOUNDED.execute(() -> {
         for (MessageRecord message : messageRecords) {
-          MessageSender.sendRemoteDelete(message.getId(), message.isMms());
+          MessageSender.sendRemoteDelete(message.getId());
         }
       });
     };
@@ -1129,7 +1122,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
     MultiselectForwardFragmentArgs.create(requireContext(),
                                           multiselectParts,
                                           args -> MultiselectForwardFragment.showBottomSheet(getChildFragmentManager(),
-                                                                                             args.withSendButtonTint(listener.getSendButtonTint())));
+                                                                                             args));
   }
 
   private void handleResendMessage(final MessageRecord message) {
@@ -1195,19 +1188,8 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
                    Toast.LENGTH_LONG).show();
   }
 
-  public long stageOutgoingMessage(OutgoingMediaMessage message) {
-    MessageRecord messageRecord = MmsDatabase.readerFor(message, threadId).getCurrent();
-
-    if (getListAdapter() != null) {
-      setLastSeen(0);
-      list.post(() -> list.scrollToPosition(0));
-    }
-
-    return messageRecord.getId();
-  }
-
-  public long stageOutgoingMessage(OutgoingTextMessage message, long messageId) {
-    MessageRecord messageRecord = SmsDatabase.readerFor(message, threadId, messageId).getCurrent();
+  public long stageOutgoingMessage(OutgoingMessage message) {
+    MessageRecord messageRecord = MessageTable.readerFor(message, threadId).getCurrent();
 
     if (getListAdapter() != null) {
       setLastSeen(0);
@@ -1327,7 +1309,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
   @SuppressWarnings("CodeBlock2Expr")
   public void jumpToMessage(@NonNull RecipientId author, long timestamp, @Nullable Runnable onMessageNotFound) {
     SimpleTask.run(getLifecycle(), () -> {
-      return SignalDatabase.mmsSms().getMessagePositionInConversation(threadId, timestamp, author);
+      return SignalDatabase.messages().getMessagePositionInConversation(threadId, timestamp, author);
     }, p -> moveToPosition(p + (isTypingIndicatorShowing() ? 1 : 0), onMessageNotFound));
   }
 
@@ -1384,7 +1366,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
 
   private void scrollToNextMention() {
     SimpleTask.run(getViewLifecycleOwner().getLifecycle(), () -> {
-      return SignalDatabase.mms().getOldestUnreadMentionDetails(threadId);
+      return SignalDatabase.messages().getOldestUnreadMentionDetails(threadId);
     }, (pair) -> {
       if (pair != null) {
         jumpToMessage(pair.first(), pair.second(), () -> {});
@@ -1471,7 +1453,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
   @Override
   public void jumpToMessage(@NonNull MessageRecord messageRecord) {
     SimpleTask.run(getLifecycle(), () -> {
-      return SignalDatabase.mmsSms().getMessagePositionInConversation(threadId,
+      return SignalDatabase.messages().getMessagePositionInConversation(threadId,
                                                                       messageRecord.getDateReceived(),
                                                                       messageRecord.isOutgoing() ? Recipient.self().getId() : messageRecord.getRecipient().getId());
     }, p -> moveToPosition(p + (isTypingIndicatorShowing() ? 1 : 0), () -> {
@@ -1756,9 +1738,9 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       }
 
       SimpleTask.run(getLifecycle(), () -> {
-        return SignalDatabase.mmsSms().getQuotedMessagePosition(threadId,
-                                                                messageRecord.getQuote().getId(),
-                                                                messageRecord.getQuote().getAuthor());
+        return SignalDatabase.messages().getQuotedMessagePosition(threadId,
+                                                                  messageRecord.getQuote().getId(),
+                                                                  messageRecord.getQuote().getAuthor());
       }, p -> moveToPosition(p + (isTypingIndicatorShowing() ? 1 : 0), () -> {
         Toast.makeText(getContext(), R.string.ConversationFragment_quoted_message_no_longer_available, Toast.LENGTH_SHORT).show();
       }));
@@ -1776,7 +1758,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
       if (getContext() != null && getActivity() != null) {
         MessageQuotesBottomSheet.show(
             getChildFragmentManager(),
-            new MessageId(messageRecord.getId(), messageRecord.isMms()),
+            new MessageId(messageRecord.getId()),
             recipient.getId()
         );
       }
@@ -1823,7 +1805,7 @@ public class ConversationFragment extends LoggingFragment implements Multiselect
 
           ApplicationDependencies.getViewOnceMessageManager().scheduleIfNecessary();
 
-          ApplicationDependencies.getJobManager().add(new MultiDeviceViewOnceOpenJob(new MessageDatabase.SyncMessageId(messageRecord.getIndividualRecipient().getId(), messageRecord.getDateSent())));
+          ApplicationDependencies.getJobManager().add(new MultiDeviceViewOnceOpenJob(new MessageTable.SyncMessageId(messageRecord.getIndividualRecipient().getId(), messageRecord.getDateSent())));
 
           return tempUri;
         } catch (IOException e) {

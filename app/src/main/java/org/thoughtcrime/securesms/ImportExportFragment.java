@@ -33,7 +33,6 @@ import org.thoughtcrime.securesms.database.PlaintextBackupImporter;
 import org.thoughtcrime.securesms.database.WhatsappBackupImporter;
 import org.thoughtcrime.securesms.keyvalue.SignalStore;
 import org.thoughtcrime.securesms.permissions.Permissions;
-import org.thoughtcrime.securesms.service.ApplicationMigrationService;
 import org.thoughtcrime.securesms.util.UriUtils;
 
 import java.io.File;
@@ -62,14 +61,12 @@ public class ImportExportFragment extends Fragment {
   @Override
   public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle bundle) {
     View layout              = inflater.inflate(R.layout.import_export_fragment, container, false);
-    View importSmsView       = layout.findViewById(R.id.import_sms             );
     View importWhatsappView  = layout.findViewById(R.id.import_whatsapp_backup);
     View importPlaintextView = layout.findViewById(R.id.import_plaintext_backup);
     View importEncryptedView = layout.findViewById(R.id.import_encrypted_backup);
     View exportPlaintextView = layout.findViewById(R.id.export_plaintext_backup);
     View exportEncryptedView = layout.findViewById(R.id.export_encrypted_backup);
 
-    importSmsView.setOnClickListener(v -> handleImportSms());
     importWhatsappView.setOnClickListener(v -> handleImportWhatsappBackup());
     importPlaintextView.setOnClickListener(v -> handleImportPlaintextBackup());
     importEncryptedView.setOnClickListener(v -> handleImportEncryptedBackup());
@@ -92,35 +89,6 @@ public class ImportExportFragment extends Fragment {
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults);
-  }
-
-  @SuppressWarnings("CodeBlock2Expr")
-  private void handleImportSms() {
-    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-    builder.setIcon(R.drawable.ic_info_outline);
-    builder.setTitle(getActivity().getString(R.string.ImportFragment_import_system_sms_database));
-    builder.setMessage(getActivity().getString(R.string.ImportFragment_this_will_import_messages_from_the_system));
-    builder.setPositiveButton(getActivity().getString(R.string.ImportFragment_import), (dialog, which) -> {
-      Permissions.with(this)
-                 .request(Manifest.permission.READ_SMS)
-                 .ifNecessary()
-                 .withPermanentDenialDialog(getString(R.string.ImportExportFragment_signal_needs_the_sms_permission_in_order_to_import_sms_messages))
-                 .onAllGranted(() -> {
-                   Intent intent = new Intent(getActivity(), ApplicationMigrationService.class);
-                   intent.setAction(ApplicationMigrationService.MIGRATE_DATABASE);
-                   getActivity().startService(intent);
-
-                   Intent nextIntent = new Intent(getActivity(), ConversationListFragment.class);
-
-                   Intent activityIntent = new Intent(getActivity(), DatabaseMigrationActivity.class);
-                   activityIntent.putExtra("next_intent", nextIntent);
-                   getActivity().startActivity(activityIntent);
-                 })
-                 .onAnyDenied(() -> Toast.makeText(getContext(), R.string.ImportExportFragment_signal_needs_the_sms_permission_in_order_to_import_sms_messages_toast, Toast.LENGTH_LONG).show())
-                 .execute();
-    });
-    builder.setNegativeButton(getActivity().getString(R.string.ImportFragment_cancel), null);
-    builder.show();
   }
 
   @SuppressWarnings("CodeBlock2Expr")

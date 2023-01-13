@@ -16,7 +16,6 @@
  */
 package org.thoughtcrime.securesms.conversation;
 
-import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -96,9 +95,9 @@ import org.thoughtcrime.securesms.conversation.colors.Colorizer;
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectCollection;
 import org.thoughtcrime.securesms.conversation.mutiselect.MultiselectPart;
 import org.thoughtcrime.securesms.conversation.ui.payment.PaymentMessageView;
-import org.thoughtcrime.securesms.database.AttachmentDatabase;
-import org.thoughtcrime.securesms.database.MediaDatabase;
-import org.thoughtcrime.securesms.database.MessageDatabase;
+import org.thoughtcrime.securesms.database.AttachmentTable;
+import org.thoughtcrime.securesms.database.MediaTable;
+import org.thoughtcrime.securesms.database.MessageTable;
 import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
@@ -189,7 +188,6 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
   private boolean                     groupThread;
   private LiveRecipient               recipient;
   private GlideRequests               glideRequests;
-  private ValueAnimator               pulseOutlinerAlphaAnimator;
   private Optional<MessageRecord>     previousMessage;
   private ConversationItemDisplayMode displayMode;
 
@@ -667,8 +665,6 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
     bodyBubble.setVideoPlayerProjection(null);
     bodyBubble.setQuoteViewProjection(null);
-
-    cancelPulseOutlinerAnimation();
   }
 
   @Override
@@ -764,6 +760,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     return conversationMessage;
   }
 
+  public boolean isOutgoing() {
+    return conversationMessage.getMessageRecord().isOutgoing();
+  }
+
   /// MessageRecord Attribute Parsers
 
   private void setBubbleState(MessageRecord messageRecord, @NonNull Recipient recipient, boolean hasWallpaper, @NonNull Colorizer colorizer) {
@@ -848,7 +848,6 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       setSelected(true);
     } else if (pulseMention) {
       setSelected(false);
-      startPulseOutlinerAnimation();
     } else {
       setSelected(false);
     }
@@ -869,29 +868,6 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       documentViewStub.get().setFocusable(!shouldInterceptClicks(conversationMessage.getMessageRecord()) && batchSelected.isEmpty());
       documentViewStub.get().setClickable(batchSelected.isEmpty());
     }
-  }
-
-  private void startPulseOutlinerAnimation() {
-    pulseOutlinerAlphaAnimator = ValueAnimator.ofInt(0, 0x66, 0).setDuration(600);
-    pulseOutlinerAlphaAnimator.setRepeatCount(1);
-    pulseOutlinerAlphaAnimator.addUpdateListener(animator -> {
-      pulseOutliner.setAlpha((Integer) animator.getAnimatedValue());
-      bodyBubble.invalidate();
-
-      if (mediaThumbnailStub.resolved()) {
-        mediaThumbnailStub.require().invalidate();
-      }
-    });
-    pulseOutlinerAlphaAnimator.start();
-  }
-
-  private void cancelPulseOutlinerAnimation() {
-    if (pulseOutlinerAlphaAnimator != null) {
-      pulseOutlinerAlphaAnimator.cancel();
-      pulseOutlinerAlphaAnimator = null;
-    }
-
-    pulseOutliner.setAlpha(0);
   }
 
   private boolean shouldDrawBodyBubbleOutline(MessageRecord messageRecord, boolean hasWallpaper) {
@@ -1311,7 +1287,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       paymentViewStub.setVisibility(View.GONE);
 
       MmsMessageRecord mmsMessageRecord = (MmsMessageRecord) messageRecord;
-      giftViewStub.get().setGiftBadge(glideRequests, Objects.requireNonNull(mmsMessageRecord.getGiftBadge()), messageRecord.isOutgoing(), giftMessageViewCallback);
+      giftViewStub.get().setGiftBadge(glideRequests, Objects.requireNonNull(mmsMessageRecord.getGiftBadge()), messageRecord.isOutgoing(), giftMessageViewCallback, messageRecord.getRecipient());
       giftViewStub.get().setVisibility(VISIBLE);
 
       footer.setVisibility(VISIBLE);
@@ -1958,10 +1934,10 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     if (messageRecord.isMms()) {
       TextSlide slide = ((MmsMessageRecord) messageRecord).getSlideDeck().getTextSlide();
 
-      if (slide != null && slide.asAttachment().getTransferState() == AttachmentDatabase.TRANSFER_PROGRESS_DONE) {
+      if (slide != null && slide.asAttachment().getTransferState() == AttachmentTable.TRANSFER_PROGRESS_DONE) {
         message = getResources().getString(R.string.ConversationItem_read_more);
         action  = () -> eventListener.onMoreTextClicked(conversationRecipient.getId(), messageRecord.getId(), messageRecord.isMms());
-      } else if (slide != null && slide.asAttachment().getTransferState() == AttachmentDatabase.TRANSFER_PROGRESS_STARTED) {
+      } else if (slide != null && slide.asAttachment().getTransferState() == AttachmentTable.TRANSFER_PROGRESS_STARTED) {
         message = getResources().getString(R.string.ConversationItem_pending);
         action  = () -> {};
       } else if (slide != null) {
@@ -2065,13 +2041,17 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
   @Override
   public @NonNull ProjectionList getColorizerProjections(@NonNull ViewGroup coordinateRoot) {
-    return getSnapshotProjections(coordinateRoot, true);
+    return getSnapshotProjections(coordinateRoot, true, true);
   }
 
   public @NonNull ProjectionList getSnapshotProjections(@NonNull ViewGroup coordinateRoot, boolean clipOutMedia) {
+    return getSnapshotProjections(coordinateRoot, clipOutMedia, true);
+  }
+
+  public @NonNull ProjectionList getSnapshotProjections(@NonNull ViewGroup coordinateRoot, boolean clipOutMedia, boolean outgoingOnly) {
     colorizerProjections.clear();
 
-    if (messageRecord.isOutgoing()      &&
+    if ((messageRecord.isOutgoing() || !outgoingOnly) &&
         !hasNoBubble(messageRecord)     &&
         !messageRecord.isRemoteDelete() &&
         bodyBubbleCorners != null       &&
@@ -2133,7 +2113,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
       }
     }
 
-    if (messageRecord.isOutgoing() &&
+    if ((messageRecord.isOutgoing() || !outgoingOnly)  &&
         hasNoBubble(messageRecord) &&
         hasWallpaper               &&
         bodyBubble.getVisibility() == VISIBLE)
@@ -2363,7 +2343,7 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
             false,
             false,
             false,
-            MediaDatabase.Sorting.Newest,
+            MediaTable.Sorting.Newest,
             slide.isVideoGif());
         context.startActivity(MediaIntentFactory.create(context, args));
       } else if (slide.getUri() != null) {
@@ -2560,8 +2540,8 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
     if (message > -1) builder.setMessage(message);
 
     builder.setPositiveButton(R.string.yes, (dialogInterface, i) -> {
-      MessageDatabase db = messageRecord.isMms() ? SignalDatabase.mms()
-                                                 : SignalDatabase.sms();
+      MessageTable db = messageRecord.isMms() ? SignalDatabase.messages()
+                                              : SignalDatabase.messages();
 
       db.markAsInsecure(messageRecord.getId());
       db.markAsOutbox(messageRecord.getId());
@@ -2579,9 +2559,9 @@ public final class ConversationItem extends RelativeLayout implements BindableCo
 
     builder.setNegativeButton(R.string.no, (dialogInterface, i) -> {
       if (messageRecord.isMms()) {
-        SignalDatabase.mms().markAsSentFailed(messageRecord.getId());
+        SignalDatabase.messages().markAsSentFailed(messageRecord.getId());
       } else {
-        SignalDatabase.sms().markAsSentFailed(messageRecord.getId());
+        SignalDatabase.messages().markAsSentFailed(messageRecord.getId());
       }
     });
     builder.show();

@@ -356,6 +356,12 @@ public final class ContactSelectionListFragment extends LoggingFragment
     return view;
   }
 
+  @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    constraintLayout = null;
+  }
+
   private @NonNull Bundle safeArguments() {
     return getArguments() != null ? getArguments() : new Bundle();
   }
@@ -661,7 +667,7 @@ public final class ContactSelectionListFragment extends LoggingFragment
       SelectedContact selectedContact = contact.isUsernameType() ? SelectedContact.forUsername(contact.getRecipientId().orElse(null), contact.getNumber())
                                                                  : SelectedContact.forPhone(contact.getRecipientId().orElse(null), contact.getNumber());
 
-      if (!canSelectSelf && Recipient.self().getId().equals(selectedContact.getOrCreateRecipientId(requireContext()))) {
+      if (!canSelectSelf && !selectedContact.hasUsername() && Recipient.self().getId().equals(selectedContact.getOrCreateRecipientId(requireContext()))) {
         Toast.makeText(requireContext(), R.string.ContactSelectionListFragment_you_do_not_need_to_add_yourself_to_the_group, Toast.LENGTH_SHORT).show();
         return;
       }

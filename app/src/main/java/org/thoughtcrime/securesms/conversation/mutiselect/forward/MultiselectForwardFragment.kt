@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
+import org.thoughtcrime.securesms.color.ViewColorSet
 import org.thoughtcrime.securesms.components.ContactFilterView
 import org.thoughtcrime.securesms.components.TooltipPopup
 import org.thoughtcrime.securesms.components.WrapperDialogFragment
@@ -46,6 +47,7 @@ import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.safety.SafetyNumberBottomSheet
 import org.thoughtcrime.securesms.sharing.ShareSelectionAdapter
 import org.thoughtcrime.securesms.sharing.ShareSelectionMappingModel
+import org.thoughtcrime.securesms.stories.GroupStoryEducationSheet
 import org.thoughtcrime.securesms.stories.Stories
 import org.thoughtcrime.securesms.stories.Stories.getHeaderAction
 import org.thoughtcrime.securesms.stories.settings.create.CreateStoryFlowDialogFragment
@@ -80,6 +82,7 @@ class MultiselectForwardFragment :
   Fragment(R.layout.multiselect_forward_fragment),
   SafetyNumberBottomSheet.Callbacks,
   ChooseStoryTypeBottomSheet.Callback,
+  GroupStoryEducationSheet.Callback,
   WrapperDialogFragment.WrapperDialogFragmentCallback,
   ChooseInitialMyStoryMembershipBottomSheetDialogFragment.Callback {
 
@@ -144,11 +147,9 @@ class MultiselectForwardFragment :
     val sendButton: AppCompatImageView = bottomBar.findViewById(R.id.share_confirm)
     val backgroundHelper: View = bottomBar.findViewById(R.id.background_helper)
 
-    val sendButtonColors = args.sendButtonColors
-    if (sendButtonColors != null) {
-      sendButton.setColorFilter(sendButtonColors.foreground.resolve(requireContext()))
-      ViewCompat.setBackgroundTintList(sendButton, ColorStateList.valueOf(sendButtonColors.background.resolve(requireContext())))
-    }
+    val sendButtonColors: ViewColorSet = args.sendButtonColors
+    sendButton.setColorFilter(sendButtonColors.foreground.resolve(requireContext()))
+    ViewCompat.setBackgroundTintList(sendButton, ColorStateList.valueOf(sendButtonColors.background.resolve(requireContext())))
 
     FullscreenHelper.configureBottomBarLayout(requireActivity(), bottomBarSpacer, bottomBar)
 
@@ -379,7 +380,6 @@ class MultiselectForwardFragment :
     }
 
     if (view != null && contactSet.any { it is ContactSearchKey.RecipientSearchKey && it.isStory }) {
-      @Suppress("NON_EXHAUSTIVE_WHEN_STATEMENT")
       when (storySendRequirements) {
         Stories.MediaTransform.SendRequirements.REQUIRES_CLIP -> {
           displayTooltip(view, R.string.MultiselectForwardFragment__videos_will_be_trimmed)
@@ -387,6 +387,7 @@ class MultiselectForwardFragment :
         Stories.MediaTransform.SendRequirements.CAN_NOT_SEND -> {
           displayTooltip(view, R.string.MultiselectForwardFragment__videos_sent_to_stories_cant)
         }
+        Stories.MediaTransform.SendRequirements.VALID_DURATION -> Unit
       }
     }
 
@@ -409,7 +410,9 @@ class MultiselectForwardFragment :
         val expandedConfig: ContactSearchConfiguration.ExpandConfig? = if (isSelectedMediaValidForNonStories()) {
           ContactSearchConfiguration.ExpandConfig(
             isExpanded = contactSearchState.expandedSections.contains(ContactSearchConfiguration.SectionKey.STORIES),
-            maxCountWhenNotExpanded = { it + 1 }
+            maxCountWhenNotExpanded = {
+              if (args.isWrappedInBottomSheet) 1 else it + 1
+            }
           )
         } else {
           null
@@ -466,11 +469,19 @@ class MultiselectForwardFragment :
   }
 
   override fun onGroupStoryClicked() {
-    ChooseGroupStoryBottomSheet().show(parentFragmentManager, ChooseGroupStoryBottomSheet.GROUP_STORY)
+    if (SignalStore.storyValues().userHasSeenGroupStoryEducationSheet) {
+      onGroupStoryEducationSheetNext()
+    } else {
+      GroupStoryEducationSheet().show(childFragmentManager, GroupStoryEducationSheet.KEY)
+    }
   }
 
   override fun onNewStoryClicked() {
     CreateStoryFlowDialogFragment().show(parentFragmentManager, CreateStoryWithViewersFragment.REQUEST_KEY)
+  }
+
+  override fun onGroupStoryEducationSheetNext() {
+    ChooseGroupStoryBottomSheet().show(parentFragmentManager, ChooseGroupStoryBottomSheet.GROUP_STORY)
   }
 
   override fun onWrapperDialogFragmentDismissed() {
@@ -505,7 +516,7 @@ class MultiselectForwardFragment :
     fun showBottomSheet(supportFragmentManager: FragmentManager, multiselectForwardFragmentArgs: MultiselectForwardFragmentArgs) {
       val fragment = MultiselectForwardBottomSheet()
 
-      showDialogFragment(supportFragmentManager, fragment, multiselectForwardFragmentArgs)
+      showDialogFragment(supportFragmentManager, fragment, multiselectForwardFragmentArgs.copy(isWrappedInBottomSheet = true))
     }
 
     @JvmStatic

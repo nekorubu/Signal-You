@@ -10,7 +10,9 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.R;
+import org.thoughtcrime.securesms.conversationlist.model.ConversationFilter;
 import org.thoughtcrime.securesms.conversationlist.model.ConversationSet;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.mms.GlideRequests;
@@ -22,76 +24,122 @@ import org.thoughtcrime.securesms.util.StickyHeaderDecoration;
 import java.util.Collections;
 import java.util.Locale;
 
-class ConversationListSearchAdapter extends    RecyclerView.Adapter<ConversationListSearchAdapter.SearchResultViewHolder>
+class ConversationListSearchAdapter extends    RecyclerView.Adapter<RecyclerView.ViewHolder>
                         implements StickyHeaderDecoration.StickyHeaderAdapter<ConversationListSearchAdapter.HeaderViewHolder>
 {
+  private static final int VIEW_TYPE_EMPTY             = 0;
+  private static final int VIEW_TYPE_NON_EMPTY         = 1;
+  private static final int VIEW_TYPE_CHAT_FILTER       = 2;
+  private static final int VIEW_TYPE_CHAT_FILTER_EMPTY = 3;
+
   private static final int TYPE_CONVERSATIONS = 1;
   private static final int TYPE_CONTACTS      = 2;
   private static final int TYPE_MESSAGES      = 3;
 
-  private final LifecycleOwner lifecycleOwner;
-  private final GlideRequests  glideRequests;
-  private final EventListener  eventListener;
-  private final Locale         locale;
+  private final LifecycleOwner                                   lifecycleOwner;
+  private final GlideRequests                                    glideRequests;
+  private final EventListener                                    eventListener;
+  private final Locale                                           locale;
+  private final ClearFilterViewHolder.OnClearFilterClickListener onClearFilterClicked;
 
   @NonNull
   private SearchResult searchResult = SearchResult.EMPTY;
 
-  ConversationListSearchAdapter(@NonNull LifecycleOwner lifecycleOwner,
-                                @NonNull GlideRequests glideRequests,
-                                @NonNull EventListener eventListener,
-                                @NonNull Locale        locale)
+  ConversationListSearchAdapter(@NonNull LifecycleOwner                                   lifecycleOwner,
+                                @NonNull GlideRequests                                    glideRequests,
+                                @NonNull EventListener                                    eventListener,
+                                @NonNull Locale                                           locale,
+                                @NonNull ClearFilterViewHolder.OnClearFilterClickListener onClearFilterClicked)
   {
-    this.lifecycleOwner = lifecycleOwner;
-    this.glideRequests  = glideRequests;
-    this.eventListener  = eventListener;
-    this.locale         = locale;
+    this.lifecycleOwner       = lifecycleOwner;
+    this.glideRequests        = glideRequests;
+    this.eventListener        = eventListener;
+    this.locale               = locale;
+    this.onClearFilterClicked = onClearFilterClicked;
   }
 
   @Override
-  public @NonNull SearchResultViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-    return new SearchResultViewHolder(LayoutInflater.from(parent.getContext())
-                                                    .inflate(R.layout.conversation_list_item_view, parent, false));
-  }
-
-  @Override
-  public void onBindViewHolder(@NonNull SearchResultViewHolder holder, int position) {
-    ThreadRecord conversationResult = getConversationResult(position);
-
-    if (conversationResult != null) {
-      holder.bind(lifecycleOwner, conversationResult, glideRequests, eventListener, locale, searchResult.getQuery());
-      return;
-    }
-
-    Recipient contactResult = getContactResult(position);
-
-    if (contactResult != null) {
-      holder.bind(lifecycleOwner, contactResult, glideRequests, eventListener, locale, searchResult.getQuery());
-      return;
-    }
-
-    MessageResult messageResult = getMessageResult(position);
-
-    if (messageResult != null) {
-      holder.bind(lifecycleOwner, messageResult, glideRequests, eventListener, locale, searchResult.getQuery());
+  public @NonNull RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    if (viewType == VIEW_TYPE_EMPTY) {
+      return new EmptyViewHolder(LayoutInflater.from(parent.getContext())
+                                               .inflate(R.layout.conversation_list_empty_search_state, parent, false));
+    } else if (viewType == VIEW_TYPE_CHAT_FILTER) {
+      View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.conversation_list_item_clear_filter, parent, false);
+      return new ClearFilterViewHolder(v, onClearFilterClicked);
+    } else if (viewType == VIEW_TYPE_CHAT_FILTER_EMPTY) {
+      View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.conversation_list_item_clear_filter_empty, parent, false);
+      return new ClearFilterViewHolder(v, onClearFilterClicked);
+    } else {
+      return new SearchResultViewHolder(LayoutInflater.from(parent.getContext())
+                                                      .inflate(R.layout.conversation_list_item_view, parent, false));
     }
   }
 
   @Override
-  public void onViewRecycled(@NonNull SearchResultViewHolder holder) {
-    holder.recycle();
+  public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    if (holder instanceof SearchResultViewHolder) {
+      SearchResultViewHolder viewHolder         = (SearchResultViewHolder) holder;
+      ThreadRecord           conversationResult = getConversationResult(position);
+
+      if (conversationResult != null) {
+        viewHolder.bind(lifecycleOwner, conversationResult, glideRequests, eventListener, locale, searchResult.getQuery());
+        return;
+      }
+
+      Recipient contactResult = getContactResult(position);
+
+      if (contactResult != null) {
+        viewHolder.bind(lifecycleOwner, contactResult, glideRequests, eventListener, locale, searchResult.getQuery());
+        return;
+      }
+
+      MessageResult messageResult = getMessageResult(position);
+
+      if (messageResult != null) {
+        viewHolder.bind(lifecycleOwner, messageResult, glideRequests, eventListener, locale, searchResult.getQuery());
+      }
+    } else if (holder instanceof EmptyViewHolder) {
+      EmptyViewHolder viewHolder = (EmptyViewHolder) holder;
+      viewHolder.bind(searchResult.getQuery());
+    }
+  }
+
+  @Override
+  public int getItemViewType(int position) {
+    if (searchResult.isEmpty() && searchResult.getConversationFilter() == ConversationFilter.OFF) {
+      return VIEW_TYPE_EMPTY;
+    } else if (searchResult.isEmpty()) {
+      return VIEW_TYPE_CHAT_FILTER_EMPTY;
+    } else if (position == getChatFilterIndex()) {
+      return VIEW_TYPE_CHAT_FILTER;
+    } else {
+      return VIEW_TYPE_NON_EMPTY;
+    }
+  }
+
+  @Override
+  public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+    if (holder instanceof SearchResultViewHolder) {
+      ((SearchResultViewHolder) holder).recycle();
+    }
   }
 
   @Override
   public int getItemCount() {
-    return searchResult.size();
+    if (searchResult.isEmpty()) {
+      return 1;
+    } if (searchResult.getConversationFilter() != ConversationFilter.OFF) {
+      return searchResult.size() + 1;
+    } else {
+      return searchResult.size();
+    }
   }
 
   @Override
   public long getHeaderId(int position) {
-    if (position < 0) {
+    if (position < 0 || searchResult.isEmpty() || position == getChatFilterIndex()) {
       return StickyHeaderDecoration.StickyHeaderAdapter.NO_HEADER_ID;
-    } else if (getConversationResult(position) != null) {
+    }  else if (getConversationResult(position) != null) {
       return TYPE_CONVERSATIONS;
     } else if (getContactResult(position) != null) {
       return TYPE_CONTACTS;
@@ -148,10 +196,36 @@ class ConversationListSearchAdapter extends    RecyclerView.Adapter<Conversation
     return getFirstContactIndex() + searchResult.getContacts().size();
   }
 
+  private int getChatFilterIndex() {
+    if (searchResult.getConversationFilter() == ConversationFilter.OFF) {
+      return -1;
+    }
+
+    if (searchResult.isEmpty()) {
+      return 0;
+    }
+
+    return searchResult.size();
+  }
+
   public interface EventListener {
     void onConversationClicked(@NonNull ThreadRecord threadRecord);
     void onContactClicked(@NonNull Recipient contact);
     void onMessageClicked(@NonNull MessageResult message);
+  }
+
+  static class EmptyViewHolder extends RecyclerView.ViewHolder {
+
+    private final TextView textView;
+
+    public EmptyViewHolder(@NonNull View itemView) {
+      super(itemView);
+      textView = itemView.findViewById(R.id.search_no_results);
+    }
+
+    public void bind(@NonNull String query) {
+      textView.setText(textView.getContext().getString(R.string.SearchFragment_no_results, query));
+    }
   }
 
   static class SearchResultViewHolder extends RecyclerView.ViewHolder {

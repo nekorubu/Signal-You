@@ -6,8 +6,8 @@ import android.os.Environment;
 import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.database.SignalDatabase;
 import org.thoughtcrime.securesms.recipients.Recipient;
+import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.util.FileUtilsJW;
 import org.thoughtcrime.securesms.util.StorageUtil;
 import org.thoughtcrime.securesms.util.TextSecurePreferences;
@@ -22,20 +22,32 @@ public class PlaintextBackupImporter {
 
   private static final String TAG = Log.tag(PlaintextBackupImporter.class);
 
-  public static void importPlaintextFromSd(Context context)
-      throws NoExternalStorageException, IOException
+  public static SQLiteStatement createMessageInsertStatement(SQLiteDatabase database) {
+    return database.compileStatement("INSERT INTO " + MessageTable.TABLE_NAME + " (" +
+                                     MessageTable.RECIPIENT_ID + ", " +
+                                     MessageTable.DATE_SENT + ", " +
+                                     MessageTable.DATE_RECEIVED + ", " +
+                                     MessageTable.READ + ", " +
+                                     MessageTable.MMS_STATUS + ", " +
+                                     MessageTable.TYPE + ", " +
+                                     MessageTable.BODY + ", " +
+                                     MessageTable.THREAD_ID + ") " +
+                                     " VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+  }
+
+  public static void importPlaintextFromSd(Context context) throws NoExternalStorageException, IOException
   {
-    Log.w(TAG, "importPlaintext()");
-    // Unzip zipfile first
+    Log.i(TAG, "importPlaintext()");
+    // Unzip zipfile first if required
     if (TextSecurePreferences.isPlainBackupInZipfile(context)) {
       File zipFile = getPlaintextExportZipFile();
       FileUtilsJW.extractEncryptedZipfile(context, zipFile.getAbsolutePath(), StorageUtil.getBackupPlaintextDirectory().getAbsolutePath());
     }
-    SmsDatabase    db          = (SmsDatabase)SignalDatabase.sms();
-    SQLiteDatabase transaction = db.beginTransaction();
+    MessageTable   table       = SignalDatabase.messages();
+    SQLiteDatabase transaction = table.beginTransaction();
 
     try {
-      ThreadDatabase threads         = SignalDatabase.threads();
+      ThreadTable    threadTable     = SignalDatabase.threads();
       XmlBackup      backup          = new XmlBackup(getPlaintextExportFile().getAbsolutePath());
       Set<Long>      modifiedThreads = new HashSet<>();
       XmlBackup.XmlBackupItem item;
@@ -44,8 +56,8 @@ public class PlaintextBackupImporter {
       // java.util.concurrent.TimeoutException: net.sqlcipher.database.SQLiteCompiledSql.finalize() timed out after 10 seconds
       while ((item = backup.getNext()) != null) {
         Recipient       recipient  = Recipient.external(context, item.getAddress());
-        long            threadId   = threads.getThreadIdFor(recipient.getId());
-        SQLiteStatement statement  = db.createInsertStatement(transaction);
+        long            threadId   = threadTable.getOrCreateThreadIdFor(recipient);
+        SQLiteStatement statement  = createMessageInsertStatement(transaction);
 
         if (item.getAddress() == null || item.getAddress().equals("null"))
           continue;
@@ -54,32 +66,28 @@ public class PlaintextBackupImporter {
           continue;
 
         addStringToStatement(statement, 1, recipient.getId().serialize());
-        addNullToStatement(statement, 2);
+        addLongToStatement(statement, 2, item.getDate());
         addLongToStatement(statement, 3, item.getDate());
-        addLongToStatement(statement, 4, item.getDate());
-        addLongToStatement(statement, 5, item.getProtocol());
-        addLongToStatement(statement, 6, item.getRead());
-        addLongToStatement(statement, 7, item.getStatus());
-        addTranslatedTypeToStatement(statement, 8, item.getType());
-        addNullToStatement(statement, 9);
-        addStringToStatement(statement, 10, item.getSubject());
-        addStringToStatement(statement, 11, item.getBody());
-        addStringToStatement(statement, 12, item.getServiceCenter());
-        addLongToStatement(statement, 13, threadId);
+        addLongToStatement(statement, 4, item.getRead());
+        addLongToStatement(statement, 5, item.getStatus());
+        addTranslatedTypeToStatement(statement, 6, item.getType());
+        addStringToStatement(statement, 7, item.getBody());
+        addLongToStatement(statement, 8, threadId);
         modifiedThreads.add(threadId);
-        statement.execute();
+        //statement.execute();
+        long rowId = statement.executeInsert();
       }
 
       for (long threadId : modifiedThreads) {
-        threads.update(threadId, true);
+        threadTable.update(threadId, true);
       }
 
-      Log.w(TAG, "Exited loop");
+      table.setTransactionSuccessful();
     } catch (XmlPullParserException e) {
       Log.w(TAG, e);
       throw new IOException("XML Parsing error!");
     } finally {
-      db.endTransaction(transaction);
+      table.endTransaction(transaction);
     }
     // Delete the plaintext file if zipfile is present
     if (TextSecurePreferences.isPlainBackupInZipfile(context)) {
@@ -105,7 +113,7 @@ public class PlaintextBackupImporter {
 
   @SuppressWarnings("SameParameterValue")
   private static void addTranslatedTypeToStatement(SQLiteStatement statement, int index, int type) {
-    statement.bindLong(index, SmsDatabase.Types.translateFromSystemBaseType(type));
+    statement.bindLong(index, MessageTable.translateFromSystemBaseType(type));
   }
 
   private static void addStringToStatement(SQLiteStatement statement, int index, String value) {
@@ -122,10 +130,10 @@ public class PlaintextBackupImporter {
   }
 
   private static boolean isAppropriateTypeForImport(long theirType) {
-    long ourType = SmsDatabase.Types.translateFromSystemBaseType(theirType);
+    long ourType = MessageTable.translateFromSystemBaseType(theirType);
 
-    return ourType == MmsSmsColumns.Types.BASE_INBOX_TYPE ||
-           ourType == MmsSmsColumns.Types.BASE_SENT_TYPE ||
-           ourType == MmsSmsColumns.Types.BASE_SENT_FAILED_TYPE;
+    return ourType == MessageTypes.BASE_INBOX_TYPE ||
+           ourType == MessageTypes.BASE_SENT_TYPE ||
+           ourType == MessageTypes.BASE_SENT_FAILED_TYPE;
   }
 }

@@ -3,6 +3,7 @@ package org.signal.donations
 import android.net.Uri
 import android.os.Parcelable
 import androidx.annotation.WorkerThread
+import com.fasterxml.jackson.databind.exc.InvalidDefinitionException
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -130,7 +131,17 @@ class StripeApi(
   fun getSetupIntent(stripeIntentAccessor: StripeIntentAccessor): StripeSetupIntent {
     return when (stripeIntentAccessor.objectType) {
       StripeIntentAccessor.ObjectType.SETUP_INTENT -> get("setup_intents/${stripeIntentAccessor.intentId}?client_secret=${stripeIntentAccessor.intentClientSecret}").use {
-        objectMapper.readValue(it.body()!!.string())
+        val body = it.body()?.string()
+        try {
+          objectMapper.readValue(body!!)
+        } catch (e: InvalidDefinitionException) {
+          Log.w(TAG, "Failed to parse JSON for StripeSetupIntent.")
+          ResponseFieldLogger.logFields(objectMapper, body)
+          throw StripeError.FailedToParseSetupIntentResponseError(e)
+        } catch (e: Exception) {
+          Log.w(TAG, "Failed to read value from JSON.", e, true)
+          throw StripeError.FailedToParseSetupIntentResponseError(null)
+        }
       }
       else -> error("Unsupported type")
     }
@@ -142,7 +153,17 @@ class StripeApi(
   fun getPaymentIntent(stripeIntentAccessor: StripeIntentAccessor): StripePaymentIntent {
     return when (stripeIntentAccessor.objectType) {
       StripeIntentAccessor.ObjectType.PAYMENT_INTENT -> get("payment_intents/${stripeIntentAccessor.intentId}?client_secret=${stripeIntentAccessor.intentClientSecret}").use {
-        objectMapper.readValue(it.body()!!.string())
+        val body = it.body()?.string()
+        try {
+          objectMapper.readValue(body!!)
+        } catch (e: InvalidDefinitionException) {
+          Log.w(TAG, "Failed to parse JSON for StripePaymentIntent.")
+          ResponseFieldLogger.logFields(objectMapper, body)
+          throw StripeError.FailedToParsePaymentIntentResponseError(e)
+        } catch (e: Exception) {
+          Log.w(TAG, "Failed to read value from JSON.", e, true)
+          throw StripeError.FailedToParsePaymentIntentResponseError(null)
+        }
       }
       else -> error("Unsupported type")
     }
@@ -507,6 +528,7 @@ class StripeApi(
   ) : Parcelable
 
   interface PaymentSource {
+    val type: PaymentSourceType
     fun parameterize(): JSONObject
     fun getTokenId(): String
     fun email(): String?

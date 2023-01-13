@@ -77,7 +77,7 @@ class ManageDonationsViewModel(
     disposables += SubscriptionRedemptionJobWatcher.watch().subscribeBy { jobStateOptional ->
       store.update { manageDonationsState ->
         manageDonationsState.copy(
-          subscriptionRedemptionState = jobStateOptional.map { jobState ->
+          subscriptionRedemptionState = jobStateOptional.map { jobState: JobTracker.JobState ->
             when (jobState) {
               JobTracker.JobState.PENDING -> ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS
               JobTracker.JobState.RUNNING -> ManageDonationsState.SubscriptionRedemptionState.IN_PROGRESS
@@ -90,7 +90,7 @@ class ManageDonationsViewModel(
       }
     }
 
-    disposables += levelUpdateOperationEdges.flatMapSingle { isProcessing ->
+    disposables += levelUpdateOperationEdges.switchMapSingle { isProcessing ->
       if (isProcessing) {
         Single.just(ManageDonationsState.TransactionState.InTransaction)
       } else {

@@ -1,33 +1,20 @@
 package org.thoughtcrime.securesms.database;
 
+import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Environment;
-import android.text.TextUtils;
 
 import org.signal.core.util.logging.Log;
 import org.thoughtcrime.securesms.attachments.Attachment;
 import org.thoughtcrime.securesms.attachments.UriAttachment;
-import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.MediaUtil;
-import org.thoughtcrime.securesms.util.Util;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class WhatsappBackup {
 
@@ -59,6 +46,7 @@ public class WhatsappBackup {
         this.whatsappDb = whatsappDb;
     }
 
+    @SuppressLint("Range")
     public static List<Attachment> getMediaAttachments(SQLiteDatabase whatsappDb, WhatsappBackupItem item) {
         List<Attachment> attachments = new LinkedList<>();
         try {
@@ -67,23 +55,23 @@ public class WhatsappBackup {
                 if (c.moveToFirst()) {
                     do {
                         File storagePath = Environment.getExternalStorageDirectory();
-                        String filePath = storagePath.getAbsolutePath() + File.separator + "Android/media/com.whatsapp/WhatsApp" + File.separator + c.getString(c.getColumnIndex("file_path"));
-                        int size = c.getInt(c.getColumnIndex("file_size"));
-                        String type = c.getString(c.getColumnIndex("mime_type"));
+                        String                     filePath = storagePath.getAbsolutePath() + File.separator + "Android/media/com.whatsapp/WhatsApp" + File.separator + c.getString(c.getColumnIndex("file_path"));
+                        int size     = c.getInt(c.getColumnIndex("file_size"));
+                        String                     type     = c.getString(c.getColumnIndex("mime_type"));
                         File file = new File(filePath);
                         if (!file.exists()) return attachments;
                         Uri uri = Uri.fromFile(file);
                         String name = filePath;
                         if (type.equals("image/jpeg")) {
-                            Attachment attachment = new UriAttachment(uri, MediaUtil.IMAGE_JPEG, AttachmentDatabase.TRANSFER_PROGRESS_DONE,
+                            Attachment attachment = new UriAttachment(uri, MediaUtil.IMAGE_JPEG, AttachmentTable.TRANSFER_PROGRESS_DONE,
                                     size, name, false, false, false, false, item.getMediaCaption(), null, null, null, null);
                             attachments.add(attachment);
                         } else if (type.equals("video/mp4")) {
-                            Attachment attachment = new UriAttachment(uri, MediaUtil.VIDEO_MP4, AttachmentDatabase.TRANSFER_PROGRESS_DONE,
+                            Attachment attachment = new UriAttachment(uri, MediaUtil.VIDEO_MP4, AttachmentTable.TRANSFER_PROGRESS_DONE,
                                     size, name, false, false, false, false, item.getMediaCaption(), null, null, null, null);
                             attachments.add(attachment);
                         } else if (type.equals("audio/ogg; codecs=opus")) {
-                        Attachment attachment = new UriAttachment(uri, MediaUtil.AUDIO_UNSPECIFIED, AttachmentDatabase.TRANSFER_PROGRESS_DONE,
+                        Attachment attachment = new UriAttachment(uri, MediaUtil.AUDIO_UNSPECIFIED, AttachmentTable.TRANSFER_PROGRESS_DONE,
                                 size, name, true, false, false, false, null, null, null, null, null);
                         attachments.add(attachment);
                         } else {
@@ -101,6 +89,7 @@ public class WhatsappBackup {
         return attachments;
     }
 
+    @SuppressLint("Range")
     public WhatsappBackup.WhatsappBackupItem getNext() {
         WhatsappBackup.WhatsappBackupItem item = null;
         try {
@@ -132,7 +121,7 @@ public class WhatsappBackup {
                         item.type          = (int)(fromMe == 1 ? 2 : 1);
                         item.serviceCenter = null;
                         item.read          = 1;
-                        item.status        = SmsDatabase.Status.STATUS_COMPLETE;
+                        item.status        = MessageTable.Status.STATUS_COMPLETE;
                         item.transport     = "Data";
                         item.mediaWaType   = c.getInt(c.getColumnIndex("media_wa_type"));
                         item.waMessageId   = c.getLong(c.getColumnIndex("_id"));
@@ -151,6 +140,7 @@ public class WhatsappBackup {
         return item;
     }
 
+    @SuppressLint("Range")
     private String getGroupName(String keyRemoteJid) {
         try {
 

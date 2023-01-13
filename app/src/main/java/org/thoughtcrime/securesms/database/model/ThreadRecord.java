@@ -22,10 +22,9 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.thoughtcrime.securesms.database.MmsSmsColumns;
-import org.thoughtcrime.securesms.database.SmsDatabase;
-import org.thoughtcrime.securesms.database.ThreadDatabase;
-import org.thoughtcrime.securesms.database.ThreadDatabase.Extra;
+import org.thoughtcrime.securesms.database.MessageTypes;
+import org.thoughtcrime.securesms.database.ThreadTable;
+import org.thoughtcrime.securesms.database.ThreadTable.Extra;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.whispersystems.signalservice.api.util.Preconditions;
@@ -33,7 +32,7 @@ import org.whispersystems.signalservice.api.util.Preconditions;
 import java.util.Objects;
 
 /**
- * Represents an entry in the {@link org.thoughtcrime.securesms.database.ThreadDatabase}.
+ * Represents an entry in the {@link org.thoughtcrime.securesms.database.ThreadTable}.
  */
 public final class ThreadRecord {
 
@@ -142,15 +141,15 @@ public final class ThreadRecord {
   }
 
   public boolean isOutgoing() {
-    return MmsSmsColumns.Types.isOutgoingMessageType(type);
+    return MessageTypes.isOutgoingMessageType(type);
   }
 
   public boolean isOutgoingAudioCall() {
-    return SmsDatabase.Types.isOutgoingAudioCall(type);
+    return MessageTypes.isOutgoingAudioCall(type);
   }
 
   public boolean isOutgoingVideoCall() {
-    return SmsDatabase.Types.isOutgoingVideoCall(type);
+    return MessageTypes.isOutgoingVideoCall(type);
   }
 
   public boolean isVerificationStatusChange() {
@@ -170,7 +169,7 @@ public final class ThreadRecord {
   }
 
   public boolean isPendingInsecureSmsFallback() {
-    return SmsDatabase.Types.isPendingInsecureSmsFallbackType(type);
+    return MessageTypes.isPendingInsecureSmsFallbackType(type);
   }
 
   public boolean isDelivered() {
@@ -396,7 +395,7 @@ public final class ThreadRecord {
     }
 
     public ThreadRecord build() {
-      if (distributionType == ThreadDatabase.DistributionTypes.CONVERSATION) {
+      if (distributionType == ThreadTable.DistributionTypes.CONVERSATION) {
         Preconditions.checkArgument(threadId > 0);
         Preconditions.checkNotNull(body);
         Preconditions.checkNotNull(recipient);

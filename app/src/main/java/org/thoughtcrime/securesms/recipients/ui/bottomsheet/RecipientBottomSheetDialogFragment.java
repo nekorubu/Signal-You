@@ -231,18 +231,20 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
                                  !recipient.isReleaseNotes();
 
       ButtonStripPreference.State  buttonStripState = new ButtonStripPreference.State(
-          /* isMessageAvailable = */ !recipient.isBlocked() && !recipient.isSelf() && !recipient.isReleaseNotes(),
-          /* isVideoAvailable   = */ !recipient.isBlocked() && !recipient.isSelf() && recipient.isRegistered(),
-          /* isAudioAvailable   = */ isAudioAvailable,
-          /* isMuteAvailable    = */ false,
-          /* isSearchAvailable  = */ false,
-          /* isAudioSecure      = */ recipient.isRegistered(),
-          /* isMuted            = */ false
+          /* isMessageAvailable     = */ !recipient.isBlocked() && !recipient.isSelf() && !recipient.isReleaseNotes(),
+          /* isVideoAvailable       = */ !recipient.isBlocked() && !recipient.isSelf() && recipient.isRegistered(),
+          /* isAudioAvailable       = */ isAudioAvailable,
+          /* isMuteAvailable        = */ false,
+          /* isSearchAvailable      = */ false,
+          /* isAudioSecure          = */ recipient.isRegistered(),
+          /* isMuted                = */ false,
+          /* isAddToStoryAvailable  = */ false
       );
 
       ButtonStripPreference.Model buttonStripModel = new ButtonStripPreference.Model(
           buttonStripState,
           DSLSettingsIcon.from(ContextUtil.requireDrawable(requireContext(), R.drawable.selectable_recipient_bottom_sheet_icon_button)),
+          () -> Unit.INSTANCE,
           () -> {
             dismiss();
             viewModel.onMessageClicked(requireActivity());
@@ -270,7 +272,7 @@ public final class RecipientBottomSheetDialogFragment extends BottomSheetDialogF
         buttonStrip.setVisibility(View.GONE);
       }
 
-      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes()) {
+      if (recipient.isSystemContact() || recipient.isGroup() || recipient.isSelf() || recipient.isBlocked() || recipient.isReleaseNotes() || !recipient.hasE164()) {
         addContactButton.setVisibility(View.GONE);
       } else {
         addContactButton.setVisibility(View.VISIBLE);

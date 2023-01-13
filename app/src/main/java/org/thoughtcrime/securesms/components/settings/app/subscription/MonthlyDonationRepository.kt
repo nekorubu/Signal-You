@@ -4,7 +4,6 @@ import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import org.signal.core.util.logging.Log
-import org.signal.core.util.money.FiatMoney
 import org.thoughtcrime.securesms.badges.Badges
 import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationError
 import org.thoughtcrime.securesms.components.settings.app.subscription.errors.DonationErrorSource
@@ -12,6 +11,7 @@ import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.jobmanager.JobTracker
 import org.thoughtcrime.securesms.jobs.MultiDeviceSubscriptionSyncRequestJob
+import org.thoughtcrime.securesms.jobs.SubscriptionKeepAliveJob
 import org.thoughtcrime.securesms.jobs.SubscriptionReceiptRequestResponseJob
 import org.thoughtcrime.securesms.keyvalue.SignalStore
 import org.thoughtcrime.securesms.recipients.Recipient
@@ -20,15 +20,12 @@ import org.thoughtcrime.securesms.subscription.LevelUpdate
 import org.thoughtcrime.securesms.subscription.LevelUpdateOperation
 import org.thoughtcrime.securesms.subscription.Subscriber
 import org.thoughtcrime.securesms.subscription.Subscription
-import org.thoughtcrime.securesms.util.PlatformCurrencyUtil
 import org.whispersystems.signalservice.api.services.DonationsService
 import org.whispersystems.signalservice.api.subscriptions.ActiveSubscription
 import org.whispersystems.signalservice.api.subscriptions.IdempotencyKey
 import org.whispersystems.signalservice.api.subscriptions.SubscriberId
-import org.whispersystems.signalservice.api.subscriptions.SubscriptionLevels
 import org.whispersystems.signalservice.internal.EmptyResponse
 import org.whispersystems.signalservice.internal.ServiceResponse
-import java.util.Currency
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -47,34 +44,33 @@ class MonthlyDonationRepository(private val donationsService: DonationsService) 
       Single.fromCallable { donationsService.getSubscription(localSubscription.subscriberId) }
         .subscribeOn(Schedulers.io())
         .flatMap(ServiceResponse<ActiveSubscription>::flattenResult)
+        .doOnSuccess { activeSubscription ->
+          if (activeSubscription.isActive && activeSubscription.activeSubscription.endOfCurrentPeriod > SignalStore.donationsValues().getLastEndOfPeriod()) {
+            SubscriptionKeepAliveJob.enqueueAndTrackTime(System.currentTimeMillis())
+          }
+        }
     } else {
       Single.just(ActiveSubscription.EMPTY)
     }
   }
 
-  fun getSubscriptions(): Single<List<Subscription>> = Single
-    .fromCallable { donationsService.getSubscriptionLevels(Locale.getDefault()) }
-    .subscribeOn(Schedulers.io())
-    .flatMap(ServiceResponse<SubscriptionLevels>::flattenResult)
-    .map { subscriptionLevels ->
-      subscriptionLevels.levels.map { (code, level) ->
-        Subscription(
-          id = code,
-          name = level.name,
-          badge = Badges.fromServiceBadge(level.badge),
-          prices = level.currencies.filter {
-            PlatformCurrencyUtil
-              .getAvailableCurrencyCodes()
-              .contains(it.key)
-          }.map { (currencyCode, price) ->
-            FiatMoney(price, Currency.getInstance(currencyCode))
-          }.toSet(),
-          level = code.toInt()
-        )
-      }.sortedBy {
-        it.level
+  fun getSubscriptions(): Single<List<Subscription>> {
+    return Single
+      .fromCallable { donationsService.getDonationsConfiguration(Locale.getDefault()) }
+      .subscribeOn(Schedulers.io())
+      .flatMap { it.flattenResult() }
+      .map { config ->
+        config.getSubscriptionLevels().map { (level, levelConfig) ->
+          Subscription(
+            id = level.toString(),
+            level = level,
+            name = levelConfig.name,
+            badge = Badges.fromServiceBadge(levelConfig.badge),
+            prices = config.getSubscriptionAmounts(level)
+          )
+        }
       }
-    }
+  }
 
   fun syncAccountRecord(): Completable {
     return Completable.fromAction {

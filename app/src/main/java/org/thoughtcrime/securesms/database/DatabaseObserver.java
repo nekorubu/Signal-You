@@ -12,6 +12,7 @@ import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.recipients.RecipientId;
 import org.thoughtcrime.securesms.util.concurrent.SerialExecutor;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.concurrent.Executor;
 /**
  * Allows listening to database changes to varying degrees of specificity.
  *
- * A replacement for the observer system in {@link Database}. We should move to this over time.
+ * A replacement for the observer system in {@link DatabaseTable}. We should move to this over time.
  */
 public class DatabaseObserver {
 
@@ -279,6 +280,14 @@ public class DatabaseObserver {
     runPostSuccessfulTransaction(KEY_STORY_OBSERVER, () -> {
       notifyMapped(storyObservers, recipientId);
     });
+  }
+
+  public void notifyStoryObservers(@NonNull Collection<RecipientId> recipientIds) {
+    for (RecipientId recipientId : recipientIds) {
+      runPostSuccessfulTransaction(KEY_STORY_OBSERVER, () -> {
+        notifyMapped(storyObservers, recipientId);
+      });
+    }
   }
 
   private void runPostSuccessfulTransaction(@NonNull String dedupeKey, @NonNull Runnable runnable) {

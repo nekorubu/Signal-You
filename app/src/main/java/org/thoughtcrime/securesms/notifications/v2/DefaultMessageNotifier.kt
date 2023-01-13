@@ -14,7 +14,6 @@ import me.leolin.shortcutbadger.ShortcutBadger
 import org.signal.core.util.PendingIntentFlags
 import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
-import org.thoughtcrime.securesms.database.MessageDatabase
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.dependencies.ApplicationDependencies
 import org.thoughtcrime.securesms.keyvalue.SignalStore
@@ -120,7 +119,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     reminderCount: Int,
     defaultBubbleState: BubbleState
   ) {
-    NotificationChannels.ensureCustomChannelConsistency(context)
+    NotificationChannels.getInstance().ensureCustomChannelConsistency()
 
     val currentLockStatus: Boolean = KeyCachingService.isLocked(context)
     val currentPrivacyPreference: NotificationPrivacyPreference = SignalStore.settings().messageNotificationsPrivacy
@@ -141,16 +140,14 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     if (state.muteFilteredMessages.isNotEmpty()) {
       Log.i(TAG, "Marking ${state.muteFilteredMessages.size} muted messages as notified to skip notification")
       state.muteFilteredMessages.forEach { item ->
-        val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-        messageDatabase.markAsNotified(item.id)
+        SignalDatabase.messages.markAsNotified(item.id)
       }
     }
 
     if (state.profileFilteredMessages.isNotEmpty()) {
       Log.i(TAG, "Marking ${state.profileFilteredMessages.size} profile filtered messages as notified to skip notification")
       state.profileFilteredMessages.forEach { item ->
-        val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-        messageDatabase.markAsNotified(item.id)
+        SignalDatabase.messages.markAsNotified(item.id)
       }
     }
 
@@ -158,8 +155,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
       Log.i(TAG, "Marking ${state.conversations.size} conversations as notified to skip notification")
       state.conversations.forEach { conversation ->
         conversation.notificationItems.forEach { item ->
-          val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-          messageDatabase.markAsNotified(item.id)
+          SignalDatabase.messages.markAsNotified(item.id)
         }
       }
       return
@@ -172,8 +168,7 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
         .forEach { conversation ->
           cleanedUpThreads += conversation.thread
           conversation.notificationItems.forEach { item ->
-            val messageDatabase: MessageDatabase = if (item.isMms) SignalDatabase.mms else SignalDatabase.sms
-            messageDatabase.markAsNotified(item.id)
+            SignalDatabase.messages.markAsNotified(item.id)
           }
         }
       if (cleanedUpThreads.isNotEmpty()) {
@@ -216,16 +211,8 @@ class DefaultMessageNotifier(context: Application) : MessageNotifier {
     ServiceUtil.getNotificationManager(context).cancelOrphanedNotifications(context, state, stickyThreads.map { it.value.notificationId }.toSet())
     updateBadge(context, state.messageCount)
 
-    val smsIds: MutableList<Long> = mutableListOf()
-    val mmsIds: MutableList<Long> = mutableListOf()
-    for (item: NotificationItem in state.notificationItems) {
-      if (item.isMms) {
-        mmsIds.add(item.id)
-      } else {
-        smsIds.add(item.id)
-      }
-    }
-    SignalDatabase.mmsSms.setNotifiedTimestamp(System.currentTimeMillis(), smsIds, mmsIds)
+    val messageIds: List<Long> = state.notificationItems.map { it.id }
+    SignalDatabase.messages.setNotifiedTimestamp(System.currentTimeMillis(), messageIds)
 
     Log.i(TAG, "threads: ${state.threadCount} messages: ${state.messageCount}")
 

@@ -6,7 +6,7 @@ import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Single
 import org.thoughtcrime.securesms.components.location.SignalPlace
 import org.thoughtcrime.securesms.components.voice.VoiceNoteDraft
-import org.thoughtcrime.securesms.database.DraftDatabase.Draft
+import org.thoughtcrime.securesms.database.DraftTable.Draft
 import org.thoughtcrime.securesms.database.MentionUtil
 import org.thoughtcrime.securesms.database.model.Mention
 import org.thoughtcrime.securesms.database.model.databaseprotos.BodyRangeList
@@ -16,6 +16,7 @@ import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.util.Base64
 import org.thoughtcrime.securesms.util.concurrent.ListenableFuture
 import org.thoughtcrime.securesms.util.rx.RxStore
+import java.util.concurrent.ExecutionException
 
 /**
  * ViewModel responsible for holding Voice Note draft state. The intention is to allow
@@ -46,8 +47,20 @@ class DraftViewModel @JvmOverloads constructor(
   }
 
   fun saveEphemeralVoiceNoteDraft(voiceNoteDraftFuture: ListenableFuture<VoiceNoteDraft>) {
-    store.update {
-      saveDrafts(it.copy(voiceNoteDraft = voiceNoteDraftFuture.get().asDraft()))
+    store.update { draftState ->
+      val draft: VoiceNoteDraft? = try {
+        voiceNoteDraftFuture.get()
+      } catch (e: ExecutionException) {
+        null
+      } catch (e: InterruptedException) {
+        null
+      }
+
+      if (draft != null) {
+        saveDrafts(draftState.copy(voiceNoteDraft = draft.asDraft()))
+      } else {
+        draftState
+      }
     }
   }
 
@@ -74,7 +87,7 @@ class DraftViewModel @JvmOverloads constructor(
 
   fun setLocationDraft(place: SignalPlace) {
     store.update {
-      saveDrafts(it.copy(locationDraft = Draft(Draft.LOCATION, place.serialize())))
+      saveDrafts(it.copy(locationDraft = Draft(Draft.LOCATION, place.serialize() ?: "")))
     }
   }
 
@@ -110,7 +123,7 @@ class DraftViewModel @JvmOverloads constructor(
     return repository
       .loadDrafts(threadId)
       .doOnSuccess { drafts ->
-        store.update { it.copyAndSetDrafts(threadId, drafts.drafts) }
+        store.update { saveDrafts(it.copyAndSetDrafts(threadId, drafts.drafts)) }
       }
       .observeOn(AndroidSchedulers.mainThread())
   }

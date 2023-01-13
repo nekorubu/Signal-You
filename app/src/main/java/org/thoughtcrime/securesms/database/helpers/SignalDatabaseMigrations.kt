@@ -19,6 +19,14 @@ import org.thoughtcrime.securesms.database.helpers.migration.V160_SmsMmsExported
 import org.thoughtcrime.securesms.database.helpers.migration.V161_StorySendMessageIdIndex
 import org.thoughtcrime.securesms.database.helpers.migration.V162_ThreadUnreadSelfMentionCountFixup
 import org.thoughtcrime.securesms.database.helpers.migration.V163_RemoteMegaphoneSnoozeSupportMigration
+import org.thoughtcrime.securesms.database.helpers.migration.V164_ThreadDatabaseReadIndexMigration
+import org.thoughtcrime.securesms.database.helpers.migration.V165_MmsMessageBoxPaymentTransactionIndexMigration
+import org.thoughtcrime.securesms.database.helpers.migration.V166_ThreadAndMessageForeignKeys
+import org.thoughtcrime.securesms.database.helpers.migration.V167_RecreateReactionTriggers
+import org.thoughtcrime.securesms.database.helpers.migration.V168_SingleMessageTableMigration
+import org.thoughtcrime.securesms.database.helpers.migration.V169_EmojiSearchIndexRank
+import org.thoughtcrime.securesms.database.helpers.migration.V170_CallTableMigration
+import org.thoughtcrime.securesms.database.helpers.migration.V171_ThreadForeignKeyFix
 
 /**
  * Contains all of the database migrations for [SignalDatabase]. Broken into a separate file for cleanliness.
@@ -27,7 +35,7 @@ object SignalDatabaseMigrations {
 
   val TAG: String = Log.tag(SignalDatabaseMigrations.javaClass)
 
-  const val DATABASE_VERSION = 163
+  const val DATABASE_VERSION = 171
 
   @JvmStatic
   fun migrate(context: Application, db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -89,6 +97,38 @@ object SignalDatabaseMigrations {
 
     if (oldVersion < 163) {
       V163_RemoteMegaphoneSnoozeSupportMigration.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 164) {
+      V164_ThreadDatabaseReadIndexMigration.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 165) {
+      V165_MmsMessageBoxPaymentTransactionIndexMigration.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 166) {
+      V166_ThreadAndMessageForeignKeys.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 167) {
+      V167_RecreateReactionTriggers.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 168) {
+      V168_SingleMessageTableMigration.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 169) {
+      V169_EmojiSearchIndexRank.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 170) {
+      V170_CallTableMigration.migrate(context, db, oldVersion, newVersion)
+    }
+
+    if (oldVersion < 171) {
+      V171_ThreadForeignKeyFix.migrate(context, db, oldVersion, newVersion)
     }
   }
 

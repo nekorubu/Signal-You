@@ -120,7 +120,7 @@
                     app:backgroundTint="@color/camera_icon_background_tint"
                     app:layout_constraintStart_toStartOf="@+id/avatar_background"
                     app:layout_constraintTop_toTopOf="@+id/avatar_background"
-                    app:srcCompat="@drawable/ic_camera_24" />
+                    app:srcCompat="@drawable/phosphor_camera" />
 
                 <LinearLayout
                     android:id="@+id/name_container"
@@ -273,7 +273,7 @@
             android:layout_marginBottom="16dp"
             android:enabled="false"
             app:circularProgressMaterialButton__label="@string/CreateProfileActivity_next"
-            app:materialThemeOverlay="@style/ThemeOverlay.Signal.CircularProgressIndicator.Primary" />
+            app:materialThemeOverlay="@style/ThemeOverlay.Signal.CircularProgressIndicator.Tonal" />
 
     </LinearLayout>
 

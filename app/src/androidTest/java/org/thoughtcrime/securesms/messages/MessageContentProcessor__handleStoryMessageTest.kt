@@ -9,7 +9,7 @@ import org.signal.libsignal.zkgroup.groups.GroupMasterKey
 import org.signal.storageservice.protos.groups.Member
 import org.signal.storageservice.protos.groups.local.DecryptedGroup
 import org.signal.storageservice.protos.groups.local.DecryptedMember
-import org.thoughtcrime.securesms.database.MessageDatabase
+import org.thoughtcrime.securesms.database.MessageTable
 import org.thoughtcrime.securesms.database.MmsHelper
 import org.thoughtcrime.securesms.database.SignalDatabase
 import org.thoughtcrime.securesms.database.model.DistributionListId
@@ -30,12 +30,12 @@ class MessageContentProcessor__handleStoryMessageTest : MessageContentProcessorT
 
   @Before
   fun setUp() {
-    SignalDatabase.mms.deleteAllThreads()
+    SignalDatabase.messages.deleteAllThreads()
   }
 
   @After
   fun tearDown() {
-    SignalDatabase.mms.deleteAllThreads()
+    SignalDatabase.messages.deleteAllThreads()
   }
 
   @Test
@@ -72,16 +72,16 @@ class MessageContentProcessor__handleStoryMessageTest : MessageContentProcessorT
 
     runTestWithContent(contentProto = storyContent)
 
-    val replyId = SignalDatabase.mmsSms.getConversation(senderThreadId, 0, 1).use {
+    val replyId = SignalDatabase.messages.getConversation(senderThreadId, 0, 1).use {
       it.moveToFirst()
-      it.requireLong(MessageDatabase.ID)
+      it.requireLong(MessageTable.ID)
     }
 
-    val replyRecord = SignalDatabase.mms.getMessageRecord(replyId) as MediaMmsMessageRecord
+    val replyRecord = SignalDatabase.messages.getMessageRecord(replyId) as MediaMmsMessageRecord
     assertEquals(ParentStoryId.DirectReply(storyMessageId).serialize(), replyRecord.parentStoryId!!.serialize())
     assertEquals(expectedBody, replyRecord.body)
 
-    SignalDatabase.mms.deleteAllThreads()
+    SignalDatabase.messages.deleteAllThreads()
   }
 
   @Test
@@ -137,19 +137,19 @@ class MessageContentProcessor__handleStoryMessageTest : MessageContentProcessorT
 
     runTestWithContent(storyContent)
 
-    val replyId = SignalDatabase.mms.getStoryReplies(insertResult.get().messageId).use { cursor ->
+    val replyId = SignalDatabase.messages.getStoryReplies(insertResult.get().messageId).use { cursor ->
       assertEquals(1, cursor.count)
       cursor.moveToFirst()
-      cursor.requireLong(MessageDatabase.ID)
+      cursor.requireLong(MessageTable.ID)
     }
 
-    val replyRecord = SignalDatabase.mms.getMessageRecord(replyId) as MediaMmsMessageRecord
+    val replyRecord = SignalDatabase.messages.getMessageRecord(replyId) as MediaMmsMessageRecord
     assertEquals(ParentStoryId.GroupReply(insertResult.get().messageId).serialize(), replyRecord.parentStoryId?.serialize())
     assertEquals(threadForGroup, replyRecord.threadId)
     assertEquals(expectedBody, replyRecord.body)
 
-    SignalDatabase.mms.deleteGroupStoryReplies(insertResult.get().messageId)
-    SignalDatabase.mms.deleteAllThreads()
+    SignalDatabase.messages.deleteGroupStoryReplies(insertResult.get().messageId)
+    SignalDatabase.messages.deleteAllThreads()
   }
 
   /**
@@ -176,6 +176,6 @@ class MessageContentProcessor__handleStoryMessageTest : MessageContentProcessorT
   private fun runTestWithContent(contentProto: SignalServiceContentProto) {
     val content = SignalServiceContent.createFromProto(contentProto)
     val testSubject = createNormalContentTestSubject()
-    testSubject.doProcess(content = content)
+    testSubject.doProcess(content = content!!)
   }
 }

@@ -19,7 +19,6 @@ import org.thoughtcrime.securesms.util.TextSecurePreferences // JW: added
 import org.thoughtcrime.securesms.exporter.flow.SmsExportActivity
 import org.thoughtcrime.securesms.exporter.flow.SmsExportDialogs
 import org.thoughtcrime.securesms.keyvalue.SignalStore
-import org.thoughtcrime.securesms.util.FeatureFlags
 import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
 import org.thoughtcrime.securesms.util.UriUtils // JW: added
@@ -133,16 +132,14 @@ class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__ch
         }
       )
 
-      if (FeatureFlags.keepMutedChatsArchived() || FeatureFlags.internalUser()) {
-        switchPref(
-          title = DSLSettingsText.from(R.string.preferences__pref_keep_muted_chats_archived),
-          summary = DSLSettingsText.from(R.string.preferences__muted_chats_that_are_archived_will_remain_archived),
-          isChecked = state.keepMutedChatsArchived,
-          onClick = {
-            viewModel.setKeepMutedChatsArchived(!state.keepMutedChatsArchived)
-          }
-        )
-      }
+      switchPref(
+        title = DSLSettingsText.from(R.string.preferences__pref_keep_muted_chats_archived),
+        summary = DSLSettingsText.from(R.string.preferences__muted_chats_that_are_archived_will_remain_archived),
+        isChecked = state.keepMutedChatsArchived,
+        onClick = {
+          viewModel.setKeepMutedChatsArchived(!state.keepMutedChatsArchived)
+        }
+      )
 
       dividerPref()
 
