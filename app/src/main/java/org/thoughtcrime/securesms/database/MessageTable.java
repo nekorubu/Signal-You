@@ -3468,6 +3468,17 @@ public class MessageTable extends DatabaseTable implements MessageTypes, Recipie
     return 0;
   }
 
+  // JW: added
+  public int getExportedInsecureMessagesCount() {
+    try (Cursor cursor = getWritableDatabase().query(getTableName(), SqlUtil.COUNT, getInsecureMessageClause() + " AND " + EXPORTED, null, null, null, null)) {
+      if (cursor.moveToFirst()) {
+        return cursor.getInt(0);
+      }
+    }
+
+    return 0;
+  }
+
   /**
    * Resets the exported state and exported flag so messages can be re-exported.
    */

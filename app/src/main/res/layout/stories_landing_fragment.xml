@@ -58,7 +58,7 @@
                 android:transitionName="camera_fab"
                 app:backgroundTint="@color/signal_colorSurfaceVariant"
                 app:elevation="0dp"
-                app:srcCompat="@drawable/ic_camera_outline_24"
+                app:srcCompat="@drawable/phosphor_camera_outline"
                 app:tint="@color/signal_colorOnSurface" />
 
             <org.thoughtcrime.securesms.components.registration.PulsingFloatingActionButton
@@ -74,7 +74,7 @@
                 android:theme="@style/Widget.Material3.FloatingActionButton.Primary"
                 android:transitionName="new_convo_fab"
                 app:backgroundTint="@color/signal_colorPrimaryContainer"
-                app:srcCompat="@drawable/ic_camera_outline_24"
+                app:srcCompat="@drawable/phosphor_camera_outline"
                 app:tint="@color/signal_colorOnSurface" />
 
         </FrameLayout>
