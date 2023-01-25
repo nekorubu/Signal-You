@@ -7,8 +7,6 @@ This also acts as a way for me to learn some Android development with an app tha
 
 ## TODO:
 - [x] Build and sign an APK
-- [ ] Improve Material You theming
-    - [ ] Make it a separate, toggleable theme, rather than on by default
-    - [ ] Make a version for Light theme
+- [ ] Make a Material You version for Light Theme
 
 See the original README [here](README%20orig.md).
