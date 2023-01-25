@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="signal_amoled_colorPrimary">#B6C5FA</color>
+    <color name="signal_amoled_colorPrimaryContainer">#464B5C</color>
+    <color name="signal_amoled_colorSecondary">#C1C6DD</color>
+    <color name="signal_amoled_colorSecondaryContainer">#414659</color>
+    <color name="signal_amoled_colorSurface">#1B1C1F</color>
+    <color name="signal_amoled_colorSurfaceVariant">#303133</color>
+    <color name="signal_amoled_colorBackground">#000000</color>
+    <color name="signal_amoled_colorError">#FFB4A9</color>
+    <color name="signal_amoled_colorErrorContainer">#930006</color>
+    <color name="signal_amoled_colorOnPrimary">#1E2438</color>
+    <color name="signal_amoled_colorOnPrimaryContainer">#DBE1FC</color>
+    <color name="signal_amoled_colorOnSecondary">#2A3042</color>
+    <color name="signal_amoled_colorOnSecondaryContainer">#DCE1F9</color>
+    <color name="signal_amoled_colorOnSurface">#E3E1E6</color>
+    <color name="signal_amoled_colorOnSurfaceVariant">#BEBCC4</color>
+    <color name="signal_amoled_colorOnBackground">#E3E1E6</color>
+    <color name="signal_amoled_colorOutline">#5D5D66</color>
+    <color name="signal_amoled_neutralSurface">#14FFFFFF</color>
+    <color name="signal_amoled_colorOnCustom">#FFFFFF</color>
+    <color name="signal_amoled_colorOnCustomVariant">#B3FFFFFF</color>
+
+    <color name="signal_amoled_colorSurface1">#16161A</color>
+    <color name="signal_amoled_colorSurface2">#1B1B21</color>
+    <color name="signal_amoled_colorSurface3">#212129</color>
+    <color name="signal_amoled_colorSurface4">#222129</color>
+    <color name="signal_amoled_colorSurface5">#25242E</color>
+
+    <color name="signal_amoled_colorTransparent1">#0AFFFFFF</color>
+    <color name="signal_amoled_colorTransparent2">#1FFFFFFF</color>
+    <color name="signal_amoled_colorTransparent3">#29FFFFFF</color>
+    <color name="signal_amoled_colorTransparent4">#7AFFFFFF</color>
+    <color name="signal_amoled_colorTransparent5">#B8FFFFFF</color>
+    <color name="signal_amoled_colorNeutral">#000000</color>
+    <color name="signal_amoled_colorNeutralVariant">#5C5C5C</color>
+    <color name="signal_amoled_colorTransparentInverse1">#0A000000</color>
+    <color name="signal_amoled_colorTransparentInverse2">#14000000</color>
+    <color name="signal_amoled_colorTransparentInverse3">#29000000</color>
+    <color name="signal_amoled_colorTransparentInverse4">#B8000000</color>
+    <color name="signal_amoled_colorTransparentInverse5">#F5000000</color>
+    <color name="signal_amoled_colorNeutralInverse">#E0FFFFFF</color>
+    <color name="signal_amoled_colorNeutralVariantInverse">#A3FFFFFF</color>
+
+    <color name="signal_amoled_colorBackground_92">#EB1B1C1F</color>
+    <color name="signal_amoled_colorSurface_87">#DE1B1C1F</color>
+    <color name="signal_amoled_colorSurfaceVariant_92">#EB303133</color>
+</resources>
