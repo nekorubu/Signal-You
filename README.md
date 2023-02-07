@@ -1,4 +1,4 @@
-This is a personal fork of [a fork](https://github.com/johanw666/Signal-Android) of the [Android app for Signal](https://github.com/signalapp/Signal-Android) that themes it with Material You colours on Android 12+, and also replaces some icons with [Phosphor](https://phosphoricons.com/) ones.
+This is a personal fork of [a fork](https://github.com/johanw666/Signal-Android) of the [Android app for Signal](https://github.com/signalapp/Signal-Android) that uses Material You colours on Android 12+.
 
 This also acts as a way for me to learn some Android development with an app that I actively use.
 
