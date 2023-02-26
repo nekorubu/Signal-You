@@ -82,7 +82,6 @@ import org.signal.core.util.Stopwatch;
 import org.signal.core.util.concurrent.SignalExecutors;
 import org.signal.core.util.concurrent.SimpleTask;
 import org.signal.core.util.logging.Log;
-import org.thoughtcrime.securesms.ImportExportActivity; // JW
 import org.thoughtcrime.securesms.MainFragment;
 import org.thoughtcrime.securesms.MainNavigator;
 import org.thoughtcrime.securesms.MuteDialog;
@@ -576,34 +575,38 @@ public class ConversationListFragment extends MainFragment implements ActionMode
   public boolean onOptionsItemSelected(@NonNull MenuItem item) {
     super.onOptionsItemSelected(item);
 
-    switch (item.getItemId()) {
-      case R.id.menu_new_group:
-        handleCreateGroup(); return true;
-      case R.id.menu_settings:
-        handleDisplaySettings(); return true;
-      case R.id.menu_clear_passphrase:
-        handleClearPassphrase(); return true;
-      case R.id.menu_mark_all_read:
-        handleMarkAllRead(); return true;
-      case R.id.menu_invite:
-        handleInvite(); return true;
-      case R.id.menu_insights:
-        handleInsights(); return true;
-      case R.id.menu_notification_profile:
-        handleNotificationProfile(); return true;
-      case R.id.menu_filter_unread_chats:
-        handleFilterUnreadChats(); return true;
-      case R.id.menu_clear_unread_filter:
-        onClearFilterClick(); return true;
-      case R.id.menu_import_export: handleImportExport(); return true; // JW: added
+    int itemId = item.getItemId();
+
+    if (itemId == R.id.menu_new_group) {
+      handleCreateGroup();
+      return true;
+    } else if (itemId == R.id.menu_settings) {
+      handleDisplaySettings();
+      return true;
+    } else if (itemId == R.id.menu_clear_passphrase) {
+      handleClearPassphrase();
+      return true;
+    } else if (itemId == R.id.menu_mark_all_read) {
+      handleMarkAllRead();
+      return true;
+    } else if (itemId == R.id.menu_invite) {
+      handleInvite();
+      return true;
+    } else if (itemId == R.id.menu_insights) {
+      handleInsights();
+      return true;
+    } else if (itemId == R.id.menu_notification_profile) {
+      handleNotificationProfile();
+      return true;
+    } else if (itemId == R.id.menu_filter_unread_chats) {
+      handleFilterUnreadChats();
+      return true;
+    } else if (itemId == R.id.menu_clear_unread_filter) {
+      onClearFilterClick();
+      return true;
+    } else {
+      return false;
     }
-
-    return false;
-  }
-
-  // JW: added
-  private void handleImportExport() {
-    startActivity(new Intent(requireActivity(), ImportExportActivity.class));
   }
 
   @Override
