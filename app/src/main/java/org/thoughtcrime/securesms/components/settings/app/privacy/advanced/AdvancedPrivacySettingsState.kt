@@ -27,5 +27,5 @@ enum class CensorshipCircumventionState(val available: Boolean) {
   AVAILABLE_AUTOMATICALLY_ENABLED(true),
 
   /** The setting is generically available */
-  AVAILABLE(true),
+  AVAILABLE(true)
 }

@@ -74,7 +74,6 @@ class ChatsSettingsFragment : DSLSettingsFragment(R.string.preferences_chats__ch
 
   private fun getConfiguration(state: ChatsSettingsState): DSLConfiguration {
     return configure {
-
       if (!state.useAsDefaultSmsApp) {
         when (state.smsExportState) {
           SmsExportState.FETCHING -> Unit
