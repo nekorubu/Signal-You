@@ -4,7 +4,7 @@ This also acts as a way for me to learn some Android development with an app tha
 
 ## TODO:
 - [x] Build and sign an APK
-- [ ] Make a Material You version for Light Theme
+- [x] Make a Material You version for Light Theme
 - [ ] Add some screenshots?
 
 See the original README [here](README%20orig.md).
