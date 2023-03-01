@@ -87,8 +87,8 @@ class PrivacySettingsViewModel(
     refresh()
   }
 
-  fun setObsoletePasswordTimeout(seconds: Long) {
-    TextSecurePreferences.setPassphraseTimeoutInterval(ApplicationDependencies.getApplication(), seconds.toInt() * 60) // JW: changed
+  fun setObsoletePasswordTimeout(minutes: Int) {
+    TextSecurePreferences.setPassphraseTimeoutInterval(ApplicationDependencies.getApplication(), minutes)
     refresh()
   }
 
