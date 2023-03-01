@@ -493,7 +493,7 @@ public final class SettingsValues extends SignalStoreValues {
   }
 
   public enum Theme {
-    SYSTEM("system"), LIGHT("light"), DARK("dark"), AMOLED("amoled"), MATERIALYOU("materialyou");
+    SYSTEM("system"), LIGHT("light"), DARK("dark");
 
     private final String value;
 
@@ -513,10 +513,6 @@ public final class SettingsValues extends SignalStoreValues {
           return LIGHT;
         case "dark":
           return DARK;
-        case "amoled":
-          return AMOLED;
-        case "materialyou":
-          return MATERIALYOU;
         default:
           throw new IllegalArgumentException("Unrecognized value " + value);
       }

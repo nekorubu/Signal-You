@@ -28,7 +28,6 @@ public final class SplashScreenUtil {
       case DARK:
         activity.getSplashScreen().setSplashScreenTheme(R.style.Theme_Signal_DayNight_NoActionBar_DarkSplash);
         break;
-      case MATERIALYOU:
       case SYSTEM:
         activity.getSplashScreen().setSplashScreenTheme(Resources.ID_NULL);
         break;
