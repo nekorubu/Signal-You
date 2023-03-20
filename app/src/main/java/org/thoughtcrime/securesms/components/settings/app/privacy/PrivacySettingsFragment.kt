@@ -49,7 +49,6 @@ import org.thoughtcrime.securesms.util.adapter.mapping.MappingAdapter
 import org.thoughtcrime.securesms.util.navigation.safeNavigate
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val TAG = Log.tag(PrivacySettingsFragment::class.java)
@@ -272,7 +271,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
 
         clickPref(
           title = DSLSettingsText.from(R.string.preferences__inactivity_timeout_interval),
-          summary = DSLSettingsText.from(getScreenLockInactivityTimeoutSummary(60 * state.obsoletePasswordTimeout.toLong())),
+          summary = DSLSettingsText.from(getScreenLockInactivityTimeoutSummary(60 * state.obsoletePasswordTimeout.toLong())), // JW
           onClick = {
             childFragmentManager.clearFragmentResult(TimeDurationPickerDialog.RESULT_DURATION)
             childFragmentManager.clearFragmentResultListener(TimeDurationPickerDialog.RESULT_DURATION)
@@ -280,7 +279,7 @@ class PrivacySettingsFragment : DSLSettingsFragment(R.string.preferences__privac
               val timeout = bundle.getLong(TimeDurationPickerDialog.RESULT_KEY_DURATION_MILLISECONDS).milliseconds.inWholeMinutes.toInt()
               viewModel.setObsoletePasswordTimeout(max(timeout, 1))
             }
-            TimeDurationPickerDialog.create(state.obsoletePasswordTimeout.minutes).show(childFragmentManager, null)
+            TimeDurationPickerDialog.create(state.obsoletePasswordTimeout.seconds * 60).show(childFragmentManager, null) // JW
           }
         )
       } else {

@@ -507,7 +507,6 @@ public final class FeatureFlags {
    */
   public static boolean hideContacts() {
     return true; // JW
-    //return getBoolean(HIDE_CONTACTS, false);
   }
 
   /**
