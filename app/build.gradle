@@ -46,8 +46,8 @@ ktlint {
     version = "0.47.1"
 }
 
-def canonicalVersionCode = 1232
-def canonicalVersionName = "6.14.5"
+def canonicalVersionCode = 1240
+def canonicalVersionName = "6.17.1.1-JW"
 
 def postFixSize = 100
 def abiPostFix = ['universal'   : 0,
@@ -68,6 +68,7 @@ def selectableVariants = [
         'playProdDebug',
         'playProdSpinner',
         'playProdPerf',
+        'playProdBenchmark',
         'playProdInstrumentation',
         'playProdRelease',
         'playStagingDebug',
@@ -170,12 +171,11 @@ android {
         multiDexEnabled true
 
         vectorDrawables.useSupportLibrary = true
-        project.ext.set("archivesBaseName", "Signal-Android") // JW: change basename
+        project.ext.set("archivesBaseName", "Signal")
 
         manifestPlaceholders = [mapsKey:"AIzaSyCSx9xea86GwDKGznCAULE9Y5a8b-TfN9U"]
 
-        // JW: change back to old code that works without having Git in the path and by downloading the source as zip, timestamp is not used anyway
-        buildConfigField "long", "BUILD_TIMESTAMP", System.currentTimeMillis() + "L"
+        buildConfigField "long", "BUILD_TIMESTAMP", "1000L" // JW: fixed time for reproducible builds, is not used anyway
         buildConfigField "String", "GIT_HASH", "\"000000\"" // JW: empty string, I don't build from a repository
         buildConfigField "String", "SIGNAL_URL", "\"https://chat.signal.org\""
         buildConfigField "String", "STORAGE_URL", "\"https://storage.signal.org\""
@@ -221,6 +221,7 @@ android {
         buildConfigField "String", "BUILD_VARIANT_TYPE", "\"unset\""
         buildConfigField "String", "BADGE_STATIC_ROOT", "\"https://updates2.signal.org/static/badges/\""
         buildConfigField "String", "STRIPE_PUBLISHABLE_KEY", "\"pk_live_6cmGZopuTsV8novGgJJW9JpC00vLIgtQ1D\""
+        buildConfigField "boolean", "TRACING_ENABLED", "false"
 
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
@@ -230,7 +231,7 @@ android {
 
         splits {
             abi {
-                enable true
+                enable !project.hasProperty('generateBaselineProfile')
                 reset()
                 include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 universalApk true
@@ -307,6 +308,17 @@ android {
             minifyEnabled true
             matchingFallbacks = ['debug']
             buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Perf\""
+            buildConfigField "boolean", "TRACING_ENABLED", "true"
+        }
+
+        benchmark {
+            initWith debug
+            isDefault false
+            debuggable false
+            minifyEnabled true
+            matchingFallbacks = ['debug']
+            buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Benchmark\""
+            buildConfigField "boolean", "TRACING_ENABLED", "true"
         }
     }
 
@@ -429,13 +441,13 @@ android {
 }
 
 dependencies {
+    implementation 'net.lingala.zip4j:zip4j:2.11.5' // JW: added
     implementation libs.androidx.core.ktx
     implementation libs.androidx.fragment.ktx
     lintChecks project(':lintchecks')
 
     coreLibraryDesugaring libs.android.tools.desugar
 
-    implementation 'net.lingala.zip4j:zip4j:2.11.5' // JW: added
     implementation (libs.androidx.appcompat) {
         version {
             strictly '1.6.1'
@@ -468,6 +480,9 @@ dependencies {
     implementation libs.androidx.autofill
     implementation libs.androidx.biometric
     implementation libs.androidx.sharetarget
+    implementation libs.androidx.profileinstaller
+    implementation libs.androidx.asynclayoutinflater
+    implementation libs.androidx.asynclayoutinflater.appcompat
 
     implementation (libs.firebase.messaging) {
         exclude group: 'com.google.firebase', module: 'firebase-core'
@@ -546,6 +561,7 @@ dependencies {
         exclude group: 'org.freemarker'
     }
     implementation libs.dnsjava
+    implementation libs.kotlinx.collections.immutable
 
     spinnerImplementation project(":spinner")
     spinnerImplementation libs.square.leakcanary

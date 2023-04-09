@@ -113,7 +113,7 @@ public class PlaintextBackupImporter {
 
   @SuppressWarnings("SameParameterValue")
   private static void addTranslatedTypeToStatement(SQLiteStatement statement, int index, int type) {
-    statement.bindLong(index, MessageTable.translateFromSystemBaseType(type));
+    statement.bindLong(index, translateFromSystemBaseType(type));
   }
 
   private static void addStringToStatement(SQLiteStatement statement, int index, String value) {
@@ -130,10 +130,23 @@ public class PlaintextBackupImporter {
   }
 
   private static boolean isAppropriateTypeForImport(long theirType) {
-    long ourType = MessageTable.translateFromSystemBaseType(theirType);
+    long ourType = translateFromSystemBaseType(theirType);
 
     return ourType == MessageTypes.BASE_INBOX_TYPE ||
            ourType == MessageTypes.BASE_SENT_TYPE ||
            ourType == MessageTypes.BASE_SENT_FAILED_TYPE;
+  }
+
+  public static long translateFromSystemBaseType(long theirType) {
+    switch ((int)theirType) {
+      case 1: return MessageTypes.BASE_INBOX_TYPE;
+      case 2: return MessageTypes.BASE_SENT_TYPE;
+      case 3: return MessageTypes.BASE_DRAFT_TYPE;
+      case 4: return MessageTypes.BASE_OUTBOX_TYPE;
+      case 5: return MessageTypes.BASE_SENT_FAILED_TYPE;
+      case 6: return MessageTypes.BASE_OUTBOX_TYPE;
+    }
+
+    return MessageTypes.BASE_INBOX_TYPE;
   }
 }

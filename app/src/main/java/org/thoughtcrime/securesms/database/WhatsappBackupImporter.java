@@ -245,7 +245,7 @@ public class WhatsappBackupImporter {
 
     @SuppressWarnings("SameParameterValue")
     private static void addTranslatedTypeToStatement(SQLiteStatement statement, int index, int type) {
-        statement.bindLong(index, MessageTable.translateFromSystemBaseType(type));
+        statement.bindLong(index, PlaintextBackupImporter.translateFromSystemBaseType(type));
     }
 
     private static void addStringToStatement(SQLiteStatement statement, int index, String value) {
@@ -262,7 +262,7 @@ public class WhatsappBackupImporter {
     }
 
     private static boolean isAppropriateTypeForImport(long theirType) {
-        long ourType = MessageTable.translateFromSystemBaseType(theirType);
+        long ourType = PlaintextBackupImporter.translateFromSystemBaseType(theirType);
 
         return ourType == BASE_INBOX_TYPE ||
                 ourType == MessageTable.BASE_SENT_TYPE ||
