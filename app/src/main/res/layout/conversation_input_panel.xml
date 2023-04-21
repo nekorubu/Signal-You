@@ -167,7 +167,7 @@
                                     android:contentDescription="@string/conversation_activity__quick_attachment_drawer_toggle_camera_description"
                                     android:scaleType="fitCenter"
                                     app:tint="@color/signal_colorOnSurfaceVariant"
-                                    app:srcCompat="@drawable/ic_camera_24" />
+                                    app:srcCompat="@drawable/phosphor_camera" />
 
                                 <org.thoughtcrime.securesms.components.MicrophoneRecorderView
                                     android:id="@+id/recorder_view"
