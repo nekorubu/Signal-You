@@ -41,11 +41,12 @@ jobs:
         # cat apksign.keystore | base64
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
         KEYSTORE_PASS: ${{ secrets.PASS }}
+        KEYSTORE_ALIAS: ${{ secrets.ALIAS }}
       run: |
         echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
         for apk in app/build/outputs/apk/playProd/release/*-unsigned-*.apk; do
         out=${apk/-unsigned-/-signed-}
-        ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${out}" "${apk}"
+        ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --ks-key-alias env:KEYSTORE_ALIAS --out "${out}" "${apk}"
         echo "$(sha256sum ${out})"
         done
         rm apksign.keystore
