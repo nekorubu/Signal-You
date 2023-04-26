@@ -39,7 +39,7 @@ jobs:
         # If you want to generate a keystore secret, run these commands:
         # keytool -genkey -v -keystore apksign.keystore -alias apksign -keyalg RSA -keysize 4096
         # cat apksign.keystore | base64
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
         KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
       run: |
         echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
