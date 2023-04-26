@@ -35,13 +35,17 @@ jobs:
       run: echo ::set-output name=VERSION::${GITHUB_REF#refs/heads/}
 
     - name: Sign APKs
+      env:
+        # If you want to generate a keystore secret, run these commands:
+        # keytool -genkey -v -keystore apksign.keystore -alias apksign -keyalg RSA -keysize 4096
+        # cat apksign.keystore | base64
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS }}
       run: |
-        echo "${{ secrets.KEYSTORE }}" > keystore.asc
-        gpg -d --passphrase "${{ secrets.PASS }}" --batch keystore.asc > apksign.keystore
-        # echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
+        echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
         for apk in app/build/outputs/apk/playProd/release/*-unsigned-*.apk; do
         out=${apk/-unsigned-/-signed-}
-        ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass ${{ secrets.KEYSTORE_PASS }} --out "${out}" "${apk}"
+        ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --out "${out}" "${apk}"
         echo "$(sha256sum ${out})"
         done
         rm apksign.keystore
@@ -52,7 +56,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: "v${{ steps.get-version.outputs.VERSION }}"
-        release_name: "${{ steps.get-version.outputs.VERSION }}"
+        release_name: "Signal ${{ steps.get-version.outputs.VERSION }}"
         draft: false
         prerelease: false
 
