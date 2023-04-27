@@ -50,14 +50,15 @@ jobs:
         echo "$(sha256sum ${out})"
         done
         rm apksign.keystore
+      
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: "v${{ steps.get-version.outputs.VERSION }}"
-        release_name: "Signal ${{ steps.get-version.outputs.VERSION }}"
+        tag_name: "v$(${{github.workspace}}/gradlew -q printVersionName)"
+        release_name: "${{ steps.get-version.outputs.VERSION }}"
         draft: false
         prerelease: false
 
