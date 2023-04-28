@@ -3,7 +3,7 @@ name: Build
 
 on:
   push:
-    branches:
+    branches-ignore:
     - main
 
 permissions:
@@ -33,15 +33,6 @@ jobs:
     - name: Get version
       id: get-version
       run: echo ::set-output name=VERSION::${GITHUB_REF#refs/heads/}
-      
-    - name : Retrieve Version
-      run: |
-        echo "::set-output name=VERSION_NAME::$(${{github.workspace}}/gradlew -q printVersionName)"
-      id: android_version
-      
-    - name: Get version
-      run: |
-        echo "version_name=${{steps.android_version.outputs.VERSION_NAME}}" >> $GITHUB_ENV
 
     - name: Sign APKs
       env:
