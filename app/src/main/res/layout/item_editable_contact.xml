@@ -33,7 +33,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/ContactShareEditActivity__edit_name"
             android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_compose_24"
+            app:srcCompat="@drawable/phosphor_pencil_simple"
             app:tint="@color/signal_colorOnSurface" />
 
     </LinearLayout>
