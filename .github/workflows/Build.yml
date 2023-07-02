@@ -28,7 +28,7 @@ jobs:
       uses: gradle/wrapper-validation-action@v1
 
     - name: Build with Gradle
-      run: ./gradlew assemblePlayProdRelease --parallel
+      run: ./gradlew assemblePlayProdRelease --parallel --gradle-version=8.2
 
     - name: Get version
       id: get-version
