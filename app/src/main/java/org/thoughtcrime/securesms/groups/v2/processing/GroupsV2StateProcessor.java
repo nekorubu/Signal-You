@@ -386,6 +386,7 @@ public class GroupsV2StateProcessor {
                                                       .filter(Objects::nonNull)
                                                       .anyMatch(serviceIds::matches);
 
+      
       boolean addedAsRequestingMember = signedGroupChange.getNewRequestingMembersList()
                                                          .stream()
                                                          .map(DecryptedRequestingMember::getUuid)
