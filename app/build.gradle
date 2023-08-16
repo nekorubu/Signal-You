@@ -163,7 +163,6 @@ android {
 
     defaultConfig {
         // applicationId "org.thoughtcrime.securesms.jw" // JW: build test versions with different package name
-        // applicationId "org.thoughtcrime.securesms.jw" // JW: build test versions with different package name
         versionCode canonicalVersionCode * postFixSize
         versionName canonicalVersionName
 
@@ -177,8 +176,6 @@ android {
 
         manifestPlaceholders = [mapsKey:"AIzaSyCSx9xea86GwDKGznCAULE9Y5a8b-TfN9U"]
 
-        buildConfigField "long", "BUILD_TIMESTAMP", "1000L" // JW: fixed time for reproducible builds, is not used anyway
-        buildConfigField "String", "GIT_HASH", "\"000000\"" // JW: empty string, I don't build from a repository
         buildConfigField "long", "BUILD_TIMESTAMP", "1000L" // JW: fixed time for reproducible builds, is not used anyway
         buildConfigField "String", "GIT_HASH", "\"000000\"" // JW: empty string, I don't build from a repository
         buildConfigField "String", "SIGNAL_URL", "\"https://chat.signal.org\""
@@ -305,7 +302,6 @@ android {
             minifyEnabled true
             proguardFiles = buildTypes.debug.proguardFiles
             manifestPlaceholders = [mapsKey:getMapsKey()] // JW
-            manifestPlaceholders = [mapsKey:getMapsKey()] // JW
             buildConfigField "String", "BUILD_VARIANT_TYPE", "\"Release\""
         }
 
@@ -426,7 +422,6 @@ android {
             if (output.baseName.contains('nightly')) {
                 output.versionCodeOverride = canonicalVersionCode * postFixSize + 5
 /* JW: I don't build in a git repository
-/* JW: I don't build in a git repository
                 def tag = getCurrentGitTag()
                 if (tag != null && tag.length() > 0) {
                     if (tag.startsWith("v")) {
@@ -434,7 +429,6 @@ android {
                     }
                     output.versionNameOverride = tag
                 }
-*/
 */
             } else {
                 output.outputFileName = output.outputFileName.replace(".apk", "-${variant.versionName}.apk")
@@ -469,7 +463,6 @@ android {
 }
 
 dependencies {
-    implementation 'net.lingala.zip4j:zip4j:2.11.5' // JW: added
     implementation 'net.lingala.zip4j:zip4j:2.11.5' // JW: added
     implementation libs.androidx.fragment.ktx
     lintChecks project(':lintchecks')
@@ -600,7 +593,6 @@ dependencies {
         exclude group: 'com.google.protobuf', module: 'protobuf-java'
     }
     testImplementation testLibs.robolectric.shadows.multidex
-    testImplementation (testLibs.bouncycastle.bcprov.jdk15on) { version { strictly "1.70" } } // Used by roboelectric
     testImplementation (testLibs.bouncycastle.bcpkix.jdk15on) { version { strictly "1.70" } } // Used by roboelectric
     testImplementation testLibs.hamcrest.hamcrest
     testImplementation testLibs.mockk
