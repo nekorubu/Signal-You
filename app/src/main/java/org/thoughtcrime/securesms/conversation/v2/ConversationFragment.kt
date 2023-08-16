@@ -828,7 +828,7 @@ class ConversationFragment :
       .conversationThreadState
       .subscribeOn(Schedulers.io())
       .doOnSuccess { state ->
-        adapter.setMessageRequestIsAccepted(state.meta.messageRequestData.isMessageRequestAccepted)
+        updateMessageRequestAcceptedState(state.meta.messageRequestData.isMessageRequestAccepted)
         SignalLocalMetrics.ConversationOpen.onDataLoaded()
         conversationItemDecorations.setFirstUnreadCount(state.meta.unreadCount)
         colorizer.onGroupMembershipChanged(state.meta.groupMemberAcis)
@@ -1210,7 +1210,17 @@ class ConversationFragment :
     presentChatColors(recipient.chatColors)
     invalidateOptionsMenu()
 
-    adapter.setMessageRequestIsAccepted(!viewModel.hasMessageRequestState)
+    updateMessageRequestAcceptedState(!viewModel.hasMessageRequestState)
+  }
+
+  private fun updateMessageRequestAcceptedState(isMessageRequestAccepted: Boolean) {
+    if (binding.conversationItemRecycler.isInLayout) {
+      binding.conversationItemRecycler.doAfterNextLayout {
+        adapter.setMessageRequestIsAccepted(isMessageRequestAccepted)
+      }
+    } else {
+      adapter.setMessageRequestIsAccepted(isMessageRequestAccepted)
+    }
   }
 
   private fun invalidateOptionsMenu() {
@@ -2396,7 +2406,7 @@ class ConversationFragment :
 
   private inner class DataObserver : RecyclerView.AdapterDataObserver() {
     override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-      if (positionStart == 0 && itemCount == 1 && shouldScrollToBottom()) {
+      if (positionStart == 0 && shouldScrollToBottom()) {
         layoutManager.scrollToPositionWithOffset(0, 0)
         scrollListener?.onScrolled(binding.conversationItemRecycler, 0, 0)
       }
@@ -3197,10 +3207,6 @@ class ConversationFragment :
 
     override fun showExpiring(recipient: Recipient) = Unit
     override fun clearExpiring() = Unit
-
-    override fun showGroupCallingTooltip() {
-      conversationTooltips.displayGroupCallingTooltip(requireView().findViewById(R.id.menu_video_secure))
-    }
 
     override fun handleFormatText(id: Int) {
       composeText.handleFormatText(id)
