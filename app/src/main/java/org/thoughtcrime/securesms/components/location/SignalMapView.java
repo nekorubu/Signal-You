@@ -101,6 +101,7 @@ public class SignalMapView extends LinearLayout {
 
     return future;
   }
+
   public static ListenableFuture<Bitmap> snapshot(final SignalPlace place, @NonNull final MapView mapView) {
     return snapshot(place.getLatLong(), mapView);
   }
