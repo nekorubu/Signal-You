@@ -3,6 +3,9 @@ name: Reproducible Build Check
 on:
   schedule:
     - cron: '0 5 * * *'
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read # to fetch code (actions/checkout)
