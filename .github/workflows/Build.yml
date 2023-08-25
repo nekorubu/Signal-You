@@ -1,10 +1,10 @@
 # Original script written by JohnBetaro
 name: Build
 
-on:
-  push:
-    branches-ignore:
-    - main
+on: workflow_dispatch
+  # push:
+    # branches-ignore:
+    # - main
 
 permissions:
   contents: write # to fetch code (actions/checkout) then release/upload.
