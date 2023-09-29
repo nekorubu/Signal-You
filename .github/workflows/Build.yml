@@ -16,7 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
+      with:
+          submodules: true
+          
     - name: Increase swapfile
       run: |
         sudo swapoff -a
