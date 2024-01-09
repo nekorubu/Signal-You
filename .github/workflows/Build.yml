@@ -45,22 +45,30 @@ jobs:
       id: get-version
       run: echo ::set-output name=VERSION::${GITHUB_REF#refs/heads/}
 
-    - name: Sign APKs
-      env:
-        # If you want to generate a keystore secret, run these commands:
-        # keytool -genkey -v -keystore apksign.keystore -alias apksign -keyalg RSA -keysize 4096
-        # cat apksign.keystore | base64
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
-        KEYSTORE_PASS: ${{ secrets.PASS }}
-        KEYSTORE_ALIAS: ${{ secrets.ALIAS }}
-      run: |
-        echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
-        for apk in app/build/outputs/apk/playProd/release/*-unsigned-*.apk; do
-        out=${apk/-unsigned-/-signed-}
-        ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --ks-key-alias ${KEYSTORE_ALIAS} --out "${out}" "${apk}"
-        echo "$(sha256sum ${out})"
-        done
-        rm apksign.keystore
+    # - name: Sign APKs
+    #   env:
+    #     # If you want to generate a keystore secret, run these commands:
+    #     # keytool -genkey -v -keystore apksign.keystore -alias apksign -keyalg RSA -keysize 4096
+    #     # cat apksign.keystore | base64
+    #     KEYSTORE_BASE64: ${{ secrets.KEYSTORE }}
+    #     KEYSTORE_PASS: ${{ secrets.PASS }}
+    #     KEYSTORE_ALIAS: ${{ secrets.ALIAS }}
+    #   run: |
+    #     echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
+    #     for apk in app/build/outputs/apk/playProd/release/*-unsigned-*.apk; do
+    #     out=${apk/-unsigned-/-signed-}
+    #     ${ANDROID_HOME}/build-tools/30.0.2/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASS --ks-key-alias ${KEYSTORE_ALIAS} --out "${out}" "${apk}"
+    #     echo "$(sha256sum ${out})"
+    #     done
+    #     rm apksign.keystore
+    - name: Sign APK
+      id: sign_app
+      uses: upup-company/apksigner-android@v1
+      with:
+        releaseDirectory: app/build/outputs/apk/playProd/release
+        signingKeyBase64: ${{ secrets.KEYSTORE }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.PASS }}
       
     - name: Create Release
       id: create_release
