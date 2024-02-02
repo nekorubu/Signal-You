@@ -38,12 +38,12 @@ jobs:
         keyPassword: ${{ secrets.PASS }}
         buildToolsVersion: 33.0.0
 
-    - name: Remove extra files
-      run: |
-        pwd
-        ls
-        find app/build/outputs/apk/playProd/release/ -type f -regex 'Signal-Android-play-prod-.*-release-unsigned-[0-9].[0-9](?!-signed).*' -delete
-        rm app/build/outputs/apk/playProd/release/key.jks
+    #- name: Remove extra files
+    #  run: |
+    #    pwd
+    #    ls
+    #    find app/build/outputs/apk/playProd/release/ -type f -regex 'Signal-Android-play-prod-.*-release-unsigned-[0-9].[0-9](?!-signed).*' -delete
+    #    rm app/build/outputs/apk/playProd/release/key.jks
     
     - name: Save APKs 
       uses: actions/upload-artifact@v4
@@ -54,7 +54,7 @@ jobs:
     
         # A file, directory or wildcard pattern that describes what to upload
         # Required.
-        path: app/build/outputs/apk/playProd/release/
+        path: app/build/outputs/apk/playProd/release/*-signed.apk
     
         # The desired behavior if no files are found using the provided path.
         # Available Options:
