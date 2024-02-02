@@ -1,4 +1,4 @@
-name: Android CI
+name: Build App
 
 on:
   push:
@@ -39,6 +39,11 @@ jobs:
         keyStorePassword: ${{ secrets.PASS }}
         keyPassword: ${{ secrets.PASS }}
         buildToolsVersion: 33.0.0
+
+    - name: Remove extra files
+      run: |
+        find app/build/outputs/apk/playProd/release/ -type f -regex 'Signal-Android-play-prod-.*-release-unsigned-[0-9].[0-9](?!-signed).*' -delete
+        rm app/build/outputs/apk/playProd/release/key.jks
     
     - name: Save APKs 
       uses: actions/upload-artifact@v4
