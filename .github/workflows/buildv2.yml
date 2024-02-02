@@ -29,7 +29,19 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assemblePlayProdRelease --parallel
 
-    - uses: actions/upload-artifact@v4
+    - name: Sign APKs
+      uses: ilharp/sign-android-release@v1.0.4 # Or use @nightly
+      id: sign_app
+      with:
+        releaseDir: app/build/outputs/apk/playProd/release/
+        signingKey: ${{ secrets.KEYSTORE }}
+        keyAlias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.PASS }}
+        keyPassword: ${{ secrets.PASS }}
+        buildToolsVersion: 33.0.0
+    
+    - name: Save APKs 
+      uses: actions/upload-artifact@v4
       with:
         # Name of the artifact to upload.
         # Optional. Default is 'artifact'
@@ -51,7 +63,7 @@ jobs:
         # Minimum 1 day.
         # Maximum 90 days unless changed from the repository settings page.
         # Optional. Defaults to repository settings.
-        retention-days: 1
+        retention-days: 2
     
         # The level of compression for Zlib to be applied to the artifact archive.
         # The value can range from 0 to 9.
