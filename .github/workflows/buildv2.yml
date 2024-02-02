@@ -3,8 +3,6 @@ name: Build App
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
@@ -42,6 +40,8 @@ jobs:
 
     - name: Remove extra files
       run: |
+        pwd
+        ls
         find app/build/outputs/apk/playProd/release/ -type f -regex 'Signal-Android-play-prod-.*-release-unsigned-[0-9].[0-9](?!-signed).*' -delete
         rm app/build/outputs/apk/playProd/release/key.jks
     
