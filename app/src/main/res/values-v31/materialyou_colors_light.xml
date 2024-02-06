@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="signal_light_colorPrimary">@android:color/system_accent1_600</color>
+    <color name="signal_light_colorPrimaryContainer">@android:color/system_accent1_100</color>
+    <color name="signal_light_colorSecondary">@android:color/system_accent2_600</color>
+    <color name="signal_light_colorSecondaryContainer">@android:color/system_accent2_100</color>
+    <color name="signal_light_colorSurface">@android:color/system_neutral1_50</color>
+    <color name="signal_light_colorSurfaceVariant">@android:color/system_neutral2_100</color>
+    <color name="signal_light_colorBackground">@android:color/system_neutral1_50</color>
+    <color name="signal_light_colorOnPrimary">@android:color/system_accent1_0</color>
+    <color name="signal_light_colorOnPrimaryContainer">@android:color/system_accent1_900</color>
+    <color name="signal_light_colorOnSecondary">@android:color/system_accent2_0</color>
+    <color name="signal_light_colorOnSecondaryContainer">@android:color/system_accent2_900</color>
+    <color name="signal_light_colorOnSurface">@android:color/system_neutral1_900</color>
+    <color name="signal_light_colorOnSurfaceVariant">@android:color/system_neutral2_700</color>
+    <color name="signal_light_colorOnBackground">@android:color/system_neutral1_900</color>
+    <color name="signal_light_colorOutline">#808389</color>
+    <color name="signal_light_neutralSurface">#99FFFFFF</color>
+    <color name="signal_light_colorOnCustom">#FFFFFF</color>
+    <color name="signal_light_colorOnCustomVariant">#B3FFFFFF</color>
+
+    <color name="signal_light_colorSurface1">@android:color/system_neutral2_50</color>
+    <color name="signal_light_colorSurface2">@android:color/system_neutral2_100</color>
+    <color name="signal_light_colorSurface3">@android:color/system_neutral2_200</color>
+    <color name="signal_light_colorSurface4">@android:color/system_neutral2_300</color>
+    <color name="signal_light_colorSurface5">@android:color/system_neutral2_400</color>
+
+    <color name="signal_light_colorTransparent1">#14FFFFFF</color>
+    <color name="signal_light_colorTransparent2">#29FFFFFF</color>
+    <color name="signal_light_colorTransparent3">#8FFFFFFF</color>
+    <color name="signal_light_colorTransparent4">#B8FFFFFF</color>
+    <color name="signal_light_colorTransparent5">#F5FFFFFF</color>
+    <color name="signal_light_colorNeutral">#FFFFFF</color>
+    <color name="signal_light_colorNeutralVariant">#B8FFFFFF</color>
+    <color name="signal_light_colorTransparentInverse1">#0A000000</color>
+    <color name="signal_light_colorTransparentInverse2">#14000000</color>
+    <color name="signal_light_colorTransparentInverse3">#66000000</color>
+    <color name="signal_light_colorTransparentInverse4">#B8000000</color>
+    <color name="signal_light_colorTransparentInverse5">#E0000000</color>
+    <color name="signal_light_colorNeutralInverse">#121212</color>
+    <color name="signal_light_colorNeutralVariantInverse">#5C5C5C</color>
+</resources>
