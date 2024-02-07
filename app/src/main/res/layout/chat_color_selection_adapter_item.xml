@@ -35,5 +35,5 @@
         android:layout_gravity="center"
         android:padding="16dp"
         app:tint="@color/core_white"
-        app:srcCompat="@drawable/phosphor_pencil_simple" />
+        app:srcCompat="@drawable/ic_compose_24" />
 </FrameLayout>

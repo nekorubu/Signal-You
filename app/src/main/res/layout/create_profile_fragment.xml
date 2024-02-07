@@ -120,7 +120,7 @@
                     app:backgroundTint="@color/camera_icon_background_tint"
                     app:layout_constraintStart_toStartOf="@+id/avatar_background"
                     app:layout_constraintTop_toTopOf="@+id/avatar_background"
-                    app:srcCompat="@drawable/phosphor_camera" />
+                    app:srcCompat="@drawable/ic_camera_24" />
 
                 <LinearLayout
                     android:id="@+id/name_container"
