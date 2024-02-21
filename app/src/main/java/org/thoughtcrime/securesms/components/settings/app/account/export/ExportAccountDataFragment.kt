@@ -1,9 +1,11 @@
 package org.thoughtcrime.securesms.components.settings.app.account.export
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement.Center
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +18,20 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -121,14 +130,26 @@ class ExportAccountDataFragment : ComposeFragment() {
           item {
             val learnMore = stringResource(R.string.ExportAccountDataFragment__learn_more)
             val explanation = stringResource(R.string.ExportAccountDataFragment__export_explanation, learnMore)
-            Texts.LinkifiedText(
-              textWithUrlSpans = SpanUtil.urlSubsequence(explanation, learnMore, stringResource(R.string.export_account_data_url)),
-              onUrlClick = { url ->
-                CommunicationActions.openBrowserLink(requireContext(), url)
-              },
-              modifier = Modifier.padding(top = 12.dp, start = 32.dp, end = 32.dp, bottom = 20.dp),
-              style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-            )
+            if (isSystemInDarkTheme()) {
+              Texts.LinkifiedText(
+                textWithUrlSpans = SpanUtil.urlSubsequence(explanation, learnMore, stringResource(R.string.export_account_data_url)),
+                onUrlClick = { url ->
+                  CommunicationActions.openBrowserLink(requireContext(), url)
+                },
+                modifier = Modifier.padding(top = 12.dp, start = 32.dp, end = 32.dp, bottom = 20.dp),
+                style = LocalTextStyle.current.copy(color = colorResource(id = R.color.signal_dark_colorOnSurface), textAlign = TextAlign.Center)
+              )
+            } else {
+              Texts.LinkifiedText(
+                textWithUrlSpans = SpanUtil.urlSubsequence(explanation, learnMore, stringResource(R.string.export_account_data_url)),
+                onUrlClick = { url ->
+                  CommunicationActions.openBrowserLink(requireContext(), url)
+                },
+                modifier = Modifier.padding(top = 12.dp, start = 32.dp, end = 32.dp, bottom = 20.dp),
+                style = LocalTextStyle.current.copy(color = colorResource(id = R.color.signal_light_colorOnSurface), textAlign = TextAlign.Center)
+              )
+            }
+
           }
 
           item {
@@ -218,11 +239,20 @@ class ExportAccountDataFragment : ComposeFragment() {
         .fillMaxWidth()
         .padding(top = 24.dp, start = 32.dp, end = 32.dp)
     ) {
-      Text(
-        text = stringResource(R.string.ExportAccountDataFragment__export_report),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onPrimaryContainer
-      )
+        if (isSystemInDarkTheme()) {
+          Text(
+            text = stringResource(R.string.ExportAccountDataFragment__export_report),
+            style = MaterialTheme.typography.labelLarge,
+            color = colorResource(id = R.color.signal_dark_colorOnBackground)
+          )
+        } else {
+          Text(
+            text = stringResource(R.string.ExportAccountDataFragment__export_report),
+            style = MaterialTheme.typography.labelLarge,
+            color = colorResource(id = R.color.signal_light_colorOnBackground)
+          )
+        }
+
     }
 
     Text(
