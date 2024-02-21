@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.components.settings.app.account.export
 
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.Image
@@ -18,19 +17,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -92,6 +85,7 @@ class ExportAccountDataFragment : ComposeFragment() {
 
   @Preview
   @Composable
+//  TODO: Try to group the theme changes between dark and light mode, as I'm not really sure how to work with Material You colors in Compose the way Google intended.
   override fun FragmentContent() {
     val state: ExportAccountDataState by viewModel.state
 
@@ -258,6 +252,7 @@ class ExportAccountDataFragment : ComposeFragment() {
     Text(
       text = stringResource(id = R.string.ExportAccountDataFragment__report_not_stored_disclaimer),
       style = MaterialTheme.typography.bodySmall,
+//      TODO: make the text at the bottom use Material You
       textAlign = TextAlign.Start,
       modifier = Modifier.padding(top = 16.dp, start = 24.dp, end = 28.dp, bottom = 20.dp)
     )
