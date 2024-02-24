@@ -52,7 +52,7 @@ jobs:
         keyPassword: ${{ secrets.PASS }}
         buildToolsVersion: 33.0.0
 
-    - name: Rename And Move APKs # To avoid publishing unsigned APKs alongside the signed ones
+    - name: Move And Rename APKs # To organize and avoid publishing unsigned APKs alongside the signed ones
       run: |
         mkdir app/build/outputs/apk/playProd/release/signed
         mv app/build/outputs/apk/playProd/release/*-signed* app/build/outputs/apk/playProd/release/signed 
@@ -65,7 +65,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: "v${{ steps.get-version.outputs.VERSION }}"
-        artifacts: app/build/outputs/apk/playProd/release/signed/Signal*universal*.apk    
+        artifacts: app/build/outputs/apk/playProd/release/signed/Signal*universal*.apk  # Remove "universal*" if you want to publish all the variants 
 
     - name: Archive reports for failed build
       if: ${{ failure() }}
