@@ -52,11 +52,14 @@ jobs:
         keyPassword: ${{ secrets.PASS }}
         buildToolsVersion: 33.0.0
 
-    - name: Rename APKs
+    - name: Rename And Move APKs # To avoid publishing unsigned APKs alongside the signed ones
       run: |
         mkdir app/build/outputs/apk/playProd/release/signed
         mv app/build/outputs/apk/playProd/release/*-signed* app/build/outputs/apk/playProd/release/signed 
-      
+        for apk in app/build/outputs/apk/playProd/release/signed/*; do
+          mv "$apk" "$(echo "$apk" | sed 's/release-unsigned-//; s/Signal-Android-play-prod/Signal/; s/-signed//')"
+        done
+        
     - name: Create Release And Upload
       uses: ncipollo/release-action@v1
       with:
