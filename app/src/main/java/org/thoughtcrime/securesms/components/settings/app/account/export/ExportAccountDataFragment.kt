@@ -103,8 +103,8 @@ class ExportAccountDataFragment : ComposeFragment() {
       Surface(
         modifier = Modifier
           .padding(contentPadding)
-          .wrapContentSize()
-          .background(colorResource(id = R.color.signal_dark_colorBackground))
+          .wrapContentSize(),
+        color = colorResource(id = R.color.signal_dark_colorBackground)
       ) {
         LazyColumn(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
           item {
