@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.components.settings.app.account.export
 import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement.Center
