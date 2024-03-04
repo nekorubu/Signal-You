@@ -104,7 +104,7 @@ class ExportAccountDataFragment : ComposeFragment() {
         modifier = Modifier
           .padding(contentPadding)
           .wrapContentSize(),
-        color = colorResource(id = R.color.signal_dark_colorBackground)
+        color = colorResource(id = R.color.signal_dark_colorBackground) // This actually works for the main content, but not the whitespace beneath the content, or the header bar with "Your account data"
       ) {
         LazyColumn(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
           item {
