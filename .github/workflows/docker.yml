@@ -3,6 +3,9 @@ name: Reproducible Build Check
 on:
   schedule:
     - cron: '0 5 * * *'
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read # to fetch code (actions/checkout)
@@ -14,8 +17,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: true
+        
     - name: Build image
       run: cd reproducible-builds && docker build -t signal-android . && cd ..
+
+    # - name: Increase swapfile
+    #   run: |
+    #     sudo swapoff -a
+    #     sudo fallocate -l 5G /swapfile
+    #     sudo chmod 600 /swapfile
+    #     sudo mkswap /swapfile
+    #     sudo swapon /swapfile
+    #     sudo swapon --show
 
     - name: Test build
       run: docker run --rm -v $(pwd):/project -w /project signal-android ./gradlew clean assemblePlayProdRelease
