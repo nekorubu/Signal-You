@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="signal_dark_colorPrimary">@android:color/system_accent1_200</color>
+    <color name="signal_dark_colorPrimaryContainer">@android:color/system_accent1_700</color>
+    <color name="signal_dark_colorSecondary">@android:color/system_accent2_100</color>
+    <color name="signal_dark_colorSecondaryContainer">@android:color/system_accent2_900</color>
+    <color name="signal_dark_colorSurface">@android:color/system_neutral1_800</color>
+    <color name="signal_dark_colorSurfaceVariant">@android:color/system_neutral2_700</color>
+    <color name="signal_dark_colorBackground">@android:color/system_neutral1_900</color>
+    <color name="signal_dark_colorOnPrimary">@android:color/system_accent1_800</color>
+    <color name="signal_dark_colorOnPrimaryContainer">@android:color/system_accent1_100</color>
+    <color name="signal_dark_colorOnSecondary">@android:color/system_accent2_800</color>
+    <color name="signal_dark_colorOnSecondaryContainer">@android:color/system_accent2_100</color>
+    <color name="signal_dark_colorOnSurface">@android:color/system_neutral1_100</color>
+    <color name="signal_dark_colorOnSurfaceVariant">@android:color/system_neutral2_200</color>
+    <color name="signal_dark_colorOnBackground">@android:color/system_neutral1_100</color>
+    <color name="signal_dark_colorOutline">#5D5D66</color>
+    <color name="signal_dark_neutralSurface">#14FFFFFF</color>
+    <color name="signal_dark_colorOnCustom">#FFFFFF</color>
+    <color name="signal_dark_colorOnCustomVariant">#B3FFFFFF</color>
+
+    <color name="signal_dark_colorSurface1">@android:color/system_neutral2_1000</color>
+    <color name="signal_dark_colorSurface2">@android:color/system_neutral2_900</color>
+    <color name="signal_dark_colorSurface3">@android:color/system_neutral2_800</color>
+    <color name="signal_dark_colorSurface4">@android:color/system_neutral2_700</color>
+    <color name="signal_dark_colorSurface5">@android:color/system_neutral2_600</color>
+
+    <color name="signal_dark_colorTransparent1">#0AFFFFFF</color>
+    <color name="signal_dark_colorTransparent2">#1FFFFFFF</color>
+    <color name="signal_dark_colorTransparent3">#29FFFFFF</color>
+    <color name="signal_dark_colorTransparent4">#7AFFFFFF</color>
+    <color name="signal_dark_colorTransparent5">#B8FFFFFF</color>
+    <color name="signal_dark_colorNeutral">#000000</color>
+    <color name="signal_dark_colorNeutralVariant">#5C5C5C</color>
+    <color name="signal_dark_colorTransparentInverse1">#0A000000</color>
+    <color name="signal_dark_colorTransparentInverse2">#14000000</color>
+    <color name="signal_dark_colorTransparentInverse3">#29000000</color>
+    <color name="signal_dark_colorTransparentInverse4">#B8000000</color>
+    <color name="signal_dark_colorTransparentInverse5">#F5000000</color>
+    <color name="signal_dark_colorNeutralInverse">#E0FFFFFF</color>
+    <color name="signal_dark_colorNeutralVariantInverse">#A3FFFFFF</color>
+
+    <color name="signal_dark_colorBackground_92">#EB1B1C1F</color>
+    <color name="signal_dark_colorSurface_87">#DE1B1C1F</color>
+    <color name="signal_dark_colorSurfaceVariant_92">#EB303133</color>
+</resources>
