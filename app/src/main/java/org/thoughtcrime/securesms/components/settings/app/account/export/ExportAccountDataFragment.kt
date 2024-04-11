@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement.Center
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -83,6 +85,7 @@ class ExportAccountDataFragment : ComposeFragment() {
 
   @Preview
   @Composable
+//  TODO: Try to group the theme changes between dark and light mode, as I'm not really sure how to work with Material You colors in Compose the way Google intended.
   override fun FragmentContent() {
     val state: ExportAccountDataState by viewModel.state
 
@@ -99,7 +102,8 @@ class ExportAccountDataFragment : ComposeFragment() {
       Surface(
         modifier = Modifier
           .padding(contentPadding)
-          .wrapContentSize()
+          .wrapContentSize(),
+        color = colorResource(id = R.color.signal_dark_colorBackground) // This actually works for the main content, but not the whitespace beneath the content, or the header bar with "Your account data"
       ) {
         LazyColumn(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
           item {
@@ -121,14 +125,26 @@ class ExportAccountDataFragment : ComposeFragment() {
           item {
             val learnMore = stringResource(R.string.ExportAccountDataFragment__learn_more)
             val explanation = stringResource(R.string.ExportAccountDataFragment__export_explanation, learnMore)
-            Texts.LinkifiedText(
-              textWithUrlSpans = SpanUtil.urlSubsequence(explanation, learnMore, stringResource(R.string.export_account_data_url)),
-              onUrlClick = { url ->
-                CommunicationActions.openBrowserLink(requireContext(), url)
-              },
-              modifier = Modifier.padding(top = 12.dp, start = 32.dp, end = 32.dp, bottom = 20.dp),
-              style = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-            )
+            if (isSystemInDarkTheme()) {
+              Texts.LinkifiedText(
+                textWithUrlSpans = SpanUtil.urlSubsequence(explanation, learnMore, stringResource(R.string.export_account_data_url)),
+                onUrlClick = { url ->
+                  CommunicationActions.openBrowserLink(requireContext(), url)
+                },
+                modifier = Modifier.padding(top = 12.dp, start = 32.dp, end = 32.dp, bottom = 20.dp),
+                style = LocalTextStyle.current.copy(color = colorResource(id = R.color.signal_dark_colorOnSurface), textAlign = TextAlign.Center)
+              )
+            } else {
+              Texts.LinkifiedText(
+                textWithUrlSpans = SpanUtil.urlSubsequence(explanation, learnMore, stringResource(R.string.export_account_data_url)),
+                onUrlClick = { url ->
+                  CommunicationActions.openBrowserLink(requireContext(), url)
+                },
+                modifier = Modifier.padding(top = 12.dp, start = 32.dp, end = 32.dp, bottom = 20.dp),
+                style = LocalTextStyle.current.copy(color = colorResource(id = R.color.signal_light_colorOnSurface), textAlign = TextAlign.Center)
+              )
+            }
+
           }
 
           item {
@@ -218,16 +234,26 @@ class ExportAccountDataFragment : ComposeFragment() {
         .fillMaxWidth()
         .padding(top = 24.dp, start = 32.dp, end = 32.dp)
     ) {
-      Text(
-        text = stringResource(R.string.ExportAccountDataFragment__export_report),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onPrimaryContainer
-      )
+        if (isSystemInDarkTheme()) {
+          Text(
+            text = stringResource(R.string.ExportAccountDataFragment__export_report),
+            style = MaterialTheme.typography.labelLarge,
+            color = colorResource(id = R.color.signal_dark_colorOnBackground)
+          )
+        } else {
+          Text(
+            text = stringResource(R.string.ExportAccountDataFragment__export_report),
+            style = MaterialTheme.typography.labelLarge,
+            color = colorResource(id = R.color.signal_light_colorOnBackground)
+          )
+        }
+
     }
 
     Text(
       text = stringResource(id = R.string.ExportAccountDataFragment__report_not_stored_disclaimer),
       style = MaterialTheme.typography.bodySmall,
+//      TODO: make the text at the bottom use Material You
       textAlign = TextAlign.Start,
       modifier = Modifier.padding(top = 16.dp, start = 24.dp, end = 28.dp, bottom = 20.dp)
     )
