@@ -230,7 +230,7 @@ public class StorageUtil {
   }
 
   public static boolean canReadFromMediaStore() {
-    return Permissions.hasAny(ApplicationDependencies.getApplication(), PermissionCompat.forImagesAndVideos());
+    return Permissions.hasAll(ApplicationDependencies.getApplication(),  PermissionCompat.forImagesAndVideos());
   }
 
   public static @NonNull Uri getVideoUri() {
