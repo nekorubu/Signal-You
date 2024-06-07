@@ -2,7 +2,7 @@ This is a personal fork of [a fork](https://github.com/johanw666/Signal-Android)
 
 This also acts as a way for me to learn some Android development with an app that I actively use.
 
-See the original README [here](README%20orig.md).
+See the original README [here](README orig.md).
 
 # Screenshots
 <img src="img/Signal-You_convo_list_dark.png" alt="Signal conversation list with Material You colors. The app is mainly dark and pink" width="50%">

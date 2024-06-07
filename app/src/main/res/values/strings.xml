@@ -1046,7 +1046,7 @@
     <string name="PromptBatterySaverBottomSheet__dismiss">Dismiss</string>
 
     <!-- PendingMembersActivity -->
-    <string name="PendingMembersActivity_pending_group_invites">Pending group invites</string>
+    <string name="PendingMembersActivity_pending_group_invites">Requests &amp; invites</string>
     <string name="PendingMembersActivity_requests">Requests</string>
     <string name="PendingMembersActivity_invites">Invites</string>
     <string name="PendingMembersActivity_people_you_invited">People you invited</string>
@@ -2077,18 +2077,16 @@
     <string name="CallOverflowPopupWindow__lower_hand">Lower hand</string>
     <!-- A negative button for a dialog confirming the user wants to lower their hand (withdraw a raised hand) -->
     <string name="CallOverflowPopupWindow__cancel">Cancel</string>
-    <!-- A notification to the user that they successfully raised their hand -->
-    <string name="CallOverflowPopupWindow__you_raised_your_hand">You raised your hand</string>
     <!-- A button to take you to a list of participants with raised hands -->
     <string name="CallOverflowPopupWindow__view">View</string>
 
-    <!-- A notification to the user that one or more participants in the call successfully raised their hand. In the singular case, it is a name. In the plural case, it is a name or "You" -->
+    <!-- A notification to the user that one or more participants in the call successfully raised their hand. The first string may either be a name, or "You". The second placeholder is a number quantifying how many other hands are also raised. -->
     <plurals name="CallOverflowPopupWindow__raised_a_hand">
-        <item quantity="one">%1$s has raised a hand</item>
-        <item quantity="other">%1$s + %2$d have raised a hand</item>
+        <item quantity="one">%1$s raised a hand</item>
+        <item quantity="other">%1$s + %2$d raised a hand</item>
     </plurals>
 
-    <!-- A badge to show how many hands are raised. The first string may be a name or "You" -->
+    <!-- A badge to show how many hands are raised. The first string may either be a name, or "You". The second placeholder is a number quantifying how many other hands are also raised. -->
     <plurals name="CallRaiseHandSnackbar_raised_hands">
         <item quantity="one">%1$s</item>
         <item quantity="other">%1$s +%2$d</item>
@@ -4333,7 +4331,7 @@
     <string name="ReviewCardDialogFragment__review_request">Review request</string>
     <!-- Message of a screen where the user will be prompted to review a message request matching the name of someone they already know -->
     <plurals name="ReviewCardDialogFragment__d_group_members_have_the_same_name">
-        <item quantity="one">%1$d group member have the same name, review the member below and choose to take action.</item>
+        <item quantity="one">%1$d group member has the same name, review the member below and choose to take action.</item>
         <item quantity="other">%1$d group members have the same name, review the members below and choose to take action.</item>
     </plurals>
     <!-- Message of a screen where the user will be prompted to review a message request matching the name of someone they already know -->
