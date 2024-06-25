@@ -107,9 +107,6 @@ public class AttachmentUtil {
         SignalDatabase.messages().deleteMessage(mmsId);
       } else {
         SignalDatabase.messages().deleteAttachmentsOnly(mmsId);
-        if (Recipient.self().getDeleteSyncCapability().isSupported()) {
-          MultiDeviceDeleteSyncJob.enqueueAttachmentDelete(SignalDatabase.messages().getMessageRecordOrNull(mmsId), attachment);
-        }
       }
     } else {
       SignalDatabase.attachments().deleteAttachment(attachmentId);
