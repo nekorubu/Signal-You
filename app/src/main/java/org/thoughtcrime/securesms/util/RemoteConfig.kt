@@ -488,9 +488,9 @@ object RemoteConfig {
   @get:JvmName("internalUser")
   val internalUser: Boolean by remoteValue(
     key = "android.internalUser",
-    hotSwappable = true
+    hotSwappable = false
   ) { value ->
-    value.asBoolean(false) || Environment.IS_NIGHTLY || Environment.IS_STAGING
+    true
   }
 
   /** The raw client expiration JSON string.  */
@@ -531,9 +531,9 @@ object RemoteConfig {
 
   val shareSelectionLimit: SelectionLimits by remoteValue(
     key = "android.share.limit",
-    hotSwappable = true
+    hotSwappable = false
   ) { value ->
-    val limit = value.asInteger(5)
+    val limit = Integer.MAX_VALUE // JW: no forward limit
     SelectionLimits(limit, limit)
   }
 
