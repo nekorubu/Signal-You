@@ -107,6 +107,7 @@ public class AttachmentUtil {
         SignalDatabase.messages().deleteMessage(mmsId);
       } else {
         SignalDatabase.messages().deleteAttachmentsOnly(mmsId);
+        deletedMessageRecord = null; // JW: don't propagate this delete to linked devices here
       }
     } else {
       SignalDatabase.attachments().deleteAttachment(attachmentId);
