@@ -179,31 +179,6 @@ public class TextSecurePreferences {
   public static final String WHO_CAN_ADD_YOU_TO_GROUPS = "pref_who_can_add_you_to_groups";
   //---------------------------------------------------------------------------
 
-  //---------------------------------------------------------------------------
-  // JW: added strings are in this block.
-  // true = passphrase, false = Android lock or fingerprint
-  public static final String PROTECTION_METHOD_PREF = "pref_signal_protection_method";
-  // true = backup to removable SD card (if available), false = backup to internal sd card
-  public static final String BACKUP_LOCATION_REMOVABLE_PREF = "pref_backup_location_external";
-  // false (default) means the backup location is not changed by the user, true means it is changed.
-  // This is used to determine at first app start to locate the app backup.
-  public static final String BACKUP_LOCATION_CHANGED = "pref_backup_location_changed";
-  // added to use encrypted zipfiles to store raw backups
-  public static final String BACKUP_STORE_ZIPFILE_PREF = "pref_backup_zipfile";
-  // added to use encrypted zipfiles to store plaintext backups
-  public static final String BACKUP_STORE_ZIPFILE_PLAIN_PREF = "pref_backup_zipfile_plain";
-  // used to see if we delete view once messages after view or not
-  public static final String KEEP_VIEW_ONCE_MESSAGES = "pref_keep_view_once_messages";
-  // used to see if we ignore remote delete messages or not
-  public static final String IGNORE_REMOTE_DELETE = "pref_ignore_remote_delete";
-  // select map type for location picker
-  public static final String GOOGLE_MAP_TYPE = "pref_google_map_type";
-  // delete only media, not the rest of the message, from the All media screen
-  public static final String DELETE_MEDIA_ONLY = "pref_delete_media_only";
-  // who can add you to groups
-  public static final String WHO_CAN_ADD_YOU_TO_GROUPS = "pref_who_can_add_you_to_groups";
-  //---------------------------------------------------------------------------
-
   private static final String[] booleanPreferencesToBackup = {SCREEN_SECURITY_PREF,
                                                               INCOGNITO_KEYBORAD_PREF,
                                                               ALWAYS_RELAY_CALLS_PREF,
