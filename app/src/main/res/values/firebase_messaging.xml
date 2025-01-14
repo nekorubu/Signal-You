@@ -4,7 +4,7 @@
     <string name="gcm_defaultSenderId" translatable="false">312334754206</string>
     <string name="default_web_client_id" translatable="false">312334754206-dg1p1mtekis8ivja3ica50vonmrlunh4.apps.googleusercontent.com</string>
     <string name="firebase_database_url" translatable="false">https://api-project-312334754206.firebaseio.com</string>
-    <string name="google_api_key" translatable="false">75947f7d0bfe0c4bb6653ff8e24b76cd5ea337ea</string> <!-- JW: replace key -->
-    <string name="google_crash_reporting_api_key" translatable="false">75947f7d0bfe0c4bb6653ff8e24b76cd5ea337ea</string> <!-- JW: replace key -->
+    <string name="google_api_key" translatable="false">AIzaSyDUN4KCcz3WaB2Ru3TNR1SgnM4KTFt-MHU</string> <!-- JW: replace key -->
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDUN4KCcz3WaB2Ru3TNR1SgnM4KTFt-MHU</string> <!-- JW: replace key -->
     <string name="project_id" translatable="false">signal-you</string> <!-- JW: replace number -->
 </resources>
