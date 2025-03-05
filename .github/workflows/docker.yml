@@ -1,6 +1,9 @@
 name: Reproducible Build Check
 
 on:
+  push:
+    branches:
+    - 'main'
   schedule:
     - cron: '0 5 * * *'
 
