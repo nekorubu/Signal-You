@@ -22,11 +22,18 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    - name: Enlarge Swapfile
+      run: |
+        export SWAP_FILE=$(swapon --show=NAME | tail -n 1)
+        sudo swapoff $SWAP_FILE
+        sudo rm $SWAP_FILE
+        sudo fallocate -l 8192M $SWAP_FILE
+        sudo chmod 600 $SWAP_FILE
+        sudo mkswap $SWAP_FILE
+        sudo swapon $SWAP_FILE
       
     - name: Build with Gradle
-      run: ./gradlew assemblePlayProdRelease --parallel
+      run: ./gradlew assemblePlayProdRelease
 
     - name: Sign APKs
       uses: ilharp/sign-android-release@v1.0.4 # Or use @nightly
@@ -38,6 +45,27 @@ jobs:
         keyStorePassword: ${{ secrets.PASS }}
         keyPassword: ${{ secrets.PASS }}
         buildToolsVersion: 33.0.0
+
+    - name: Sign APKs
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      run: |
+        echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
+        for apk in app/build/outputs/apk/playProd/release/*-unsigned-*.apk; do
+          out=${apk/-unsigned-/-signed-}
+          ${ANDROID_HOME}/build-tools/34.0.0/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASSWORD --out "${out}" "${apk}"
+          echo "$(sha256sum ${out})"
+        done
+        rm apksign.keystore
+
+    - name: Create Release And Upload
+      env:
+         GITHUB_TOKEN: ${{ secrets.GAT }}
+      run: |
+        VERSION=$(awk -F ' = ' '/val canonicalVersionName/ {print $2}' app/build.gradle.kts | tr -d '"')
+        rm -f app/build/outputs/apk/playProd/release/*unsigned*.apk
+        gh release create "v$VERSION" --title "$VERSION" --notes "Yet another release !" app/build/outputs/apk/playProd/release/*.apk
     
     - name: Save APKs 
       uses: actions/upload-artifact@v4
