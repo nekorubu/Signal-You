@@ -46,19 +46,6 @@ jobs:
         keyPassword: ${{ secrets.PASS }}
         buildToolsVersion: 33.0.0
 
-    - name: Sign APKs
-      env:
-        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-      run: |
-        echo "${KEYSTORE_BASE64}" | base64 -d > apksign.keystore
-        for apk in app/build/outputs/apk/playProd/release/*-unsigned-*.apk; do
-          out=${apk/-unsigned-/-signed-}
-          ${ANDROID_HOME}/build-tools/34.0.0/apksigner sign --ks apksign.keystore --ks-pass env:KEYSTORE_PASSWORD --out "${out}" "${apk}"
-          echo "$(sha256sum ${out})"
-        done
-        rm apksign.keystore
-
     - name: Create Release And Upload
       env:
          GITHUB_TOKEN: ${{ secrets.GAT }}
