@@ -3,7 +3,7 @@ name: Build App
 on:
   push:
     branches:
-      - main-buildv3-test
+      - main
 
 jobs:
   build:
