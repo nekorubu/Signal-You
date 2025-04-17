@@ -1033,6 +1033,20 @@ object RemoteConfig {
     BuildConfig.MESSAGE_BACKUP_RESTORE_ENABLED || value.asBoolean(false)
   }
 
+  /**
+   * Percentage [0, 100] of web socket requests that will be "shadowed" by sending
+   * an unauthenticated keep-alive via libsignal-net. Default: 0
+   */
+  @JvmStatic
+  @get:JvmName("libSignalWebSocketShadowingPercentage")
+  val libSignalWebSocketShadowingPercentage: Int by remoteValue(
+    key = "android.libsignalWebSocketShadowingPercentage",
+    hotSwappable = false
+  ) { value ->
+    val remote = value.asInteger(0)
+    remote.coerceIn(0, 100)
+  }
+
   @JvmStatic
   val backgroundMessageProcessInterval: Long by remoteValue(
     key = "android.messageProcessor.alarmIntervalMins",
@@ -1072,11 +1086,7 @@ object RemoteConfig {
 
   /** Whether or not to show chat folders. */
   @JvmStatic
-  val showChatFolders: Boolean by remoteBoolean(
-    key = "android.showChatFolders.2",
-    defaultValue = false,
-    hotSwappable = true
-  )
+  val showChatFolders: Boolean = true // JW
 
   /** Whether or not to use the new pinned chat UI. */
   @JvmStatic
