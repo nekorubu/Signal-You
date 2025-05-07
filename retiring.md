@@ -1,7 +1,7 @@
 TL;DR: Dynamic theming in this app is broken, I honestly don't know how to fix it, and I am lacking the motivation I think would be needed for me to fix it, so it may be better to move to a different Signal app.
 
 # The current state of Signal-You
-If you compare the screenshots in the repository's README to what the app looks like now, you can probably tell that there's some glaring issues with the hallmark feature of this app (as seen in [issue 11](https://github.com/nekorubu/Signal-You/issues/11)). Issues like this have actually been going on for quite a while. It originally started with the main settings menu, then other settings pages, and now to the bottom bar on the main conversations list.
+If you compare the screenshots in [the repository's original README](https://github.com/nekorubu/Signal-You/blob/main/README-orig.md) to what the app looks like now, you can probably tell that there's some glaring issues with the hallmark feature of this app (as seen in [issue 11](https://github.com/nekorubu/Signal-You/issues/11)). Issues like this have actually been going on for quite a while. It originally started with the main settings menu, then other settings pages, and now to the bottom bar on the main conversations list.
 
 Why haven't they been fixed? It's mainly because I haven't been able to figure out how to fix them, nor have I been able to find the focus or time to try to figure out how to fix the issue.
 
