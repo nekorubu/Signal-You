@@ -200,6 +200,7 @@ public class PassphrasePromptActivity extends PassphraseActivity {
       MasterSecret masterSecret = MasterSecretUtil.getMasterSecret(this, passphrase);
 
       setMasterSecret(masterSecret);
+      getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN); // JW: close keyboard explicitly after correct passphrase, since 7.41
     } catch (InvalidPassphraseException ipe) {
       passphraseText.setText("");
       passphraseText.setError(
