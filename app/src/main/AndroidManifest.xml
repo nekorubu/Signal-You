@@ -691,11 +691,11 @@
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:exported="false"/>
 
-    <!-- JW: added the windowSoftInputMode="stateAlwaysVisible" flag here to show a keyboard on open -->
+    <!-- JW: added the windowSoftInputMode="stateVisible" flag here to show a keyboard on open -->
     <activity android:name=".PassphrasePromptActivity"
               android:launchMode="singleTask"
               android:theme="@style/Theme.Signal.DayNight.NoActionBar"
-              android:windowSoftInputMode="stateAlwaysVisible"
+              android:windowSoftInputMode="stateVisible"
               android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
               android:exported="false"/>
 
