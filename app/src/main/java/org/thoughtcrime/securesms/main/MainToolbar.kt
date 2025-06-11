@@ -102,6 +102,7 @@ interface MainToolbarCallback {
   fun onCloseActionModeClick()
   fun onSearchQueryUpdated(query: String)
   fun onNotificationProfileTooltipDismissed()
+  fun onImportExportClick() // JW
 
   object Empty : MainToolbarCallback {
     override fun onNewGroupClick() = Unit
@@ -123,6 +124,7 @@ interface MainToolbarCallback {
     override fun onCloseActionModeClick() = Unit
     override fun onSearchQueryUpdated(query: String) = Unit
     override fun onNotificationProfileTooltipDismissed() = Unit
+    override fun onImportExportClick() = Unit // JW
   }
 }
 
@@ -590,6 +592,20 @@ private fun CallDropdownItems(callFilter: CallLogFilter, callback: MainToolbarCa
       }
     )
   }
+
+  // JW: added
+  DropdownMenus.Item(
+    text = {
+      Text(
+        text = stringResource(R.string.arrays__import_export_orig),
+        style = MaterialTheme.typography.bodyLarge
+      )
+    },
+    onClick = {
+      callback.onImportExportClick()
+      onOptionSelected()
+    }
+  )
 
   DropdownMenus.Item(
     text = {
