@@ -133,24 +133,6 @@ class MediaTable internal constructor(context: Context?, databaseHelper: SignalD
         (${AttachmentTable.CONTENT_TYPE} LIKE 'image/%' OR ${AttachmentTable.CONTENT_TYPE} LIKE 'video/%')
       """
     )
-*/
-    private val GALLERY_MEDIA_QUERY = String.format(
-      BASE_MEDIA_QUERY,
-      """
-        ${AttachmentTable.DATA_FILE} IS NOT NULL AND
-        ${AttachmentTable.CONTENT_TYPE} NOT LIKE 'image/svg%' AND 
-        (${AttachmentTable.CONTENT_TYPE} LIKE 'image/%' OR ${AttachmentTable.CONTENT_TYPE} LIKE 'video/%')
-      """
-    )
-
-    private val GALLERY_MEDIA_QUERY_INCLUDING_TEMP_VIDEOS = String.format(
-      BASE_MEDIA_QUERY,
-      """
-        (${AttachmentTable.DATA_FILE} IS NOT NULL OR (${AttachmentTable.CONTENT_TYPE} LIKE 'video/%' AND ${AttachmentTable.REMOTE_INCREMENTAL_DIGEST} IS NOT NULL)) AND
-        ${AttachmentTable.CONTENT_TYPE} NOT LIKE 'image/svg%' AND 
-        (${AttachmentTable.CONTENT_TYPE} LIKE 'image/%' OR ${AttachmentTable.CONTENT_TYPE} LIKE 'video/%')
-      """
-    )
 
     private val AUDIO_MEDIA_QUERY = String.format(
       BASE_MEDIA_QUERY,
