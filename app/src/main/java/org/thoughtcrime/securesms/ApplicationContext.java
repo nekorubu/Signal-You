@@ -383,7 +383,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   public void initializeMessageRetrieval() {
-    SignalExecutors.UNBOUNDED.execute(AppDependencies::startNetwork);
+    AppDependencies.startNetwork();
   }
 
   @VisibleForTesting
