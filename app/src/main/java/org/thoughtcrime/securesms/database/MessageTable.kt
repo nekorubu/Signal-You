@@ -3222,7 +3222,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     val bodyRanges = message.bodyRanges.adjustBodyRanges(updatedBodyAndMentions.bodyAdjustments)
     val (messageId, insertedAttachments) = insertMediaMessage(
       threadId = threadId,
-      body = updatedBodyAndMentions.bodyAsString?.trim(),
+      body = updatedBodyAndMentions.bodyAsString,
       attachments = message.attachments,
       quoteAttachments = quoteAttachments,
       sharedContacts = message.sharedContacts,
