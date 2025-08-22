@@ -9,9 +9,6 @@ data class AdvancedPrivacySettingsState(
   val showSealedSenderStatusIcon: Boolean,
   val allowSealedSenderFromAnyone: Boolean,
   val showProgressSpinner: Boolean
-  // JW: added
-  ,
-  val pushNotificationsViaFCM: Boolean
 )
 
 enum class CensorshipCircumventionState(val available: Boolean) {
