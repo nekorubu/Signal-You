@@ -93,6 +93,9 @@ class AdvancedPrivacySettingsViewModel(
         AppDependencies.application
       ),
       false
+      // JW: added
+      ,
+      pushNotificationsViaFCM = SignalStore.account.fcmEnabled
     )
   }
 
