@@ -112,8 +112,25 @@ class MediaTable internal constructor(context: Context?, databaseHelper: SignalD
         (${AttachmentTable.DATA_FILE} IS NOT NULL OR (${AttachmentTable.CONTENT_TYPE} LIKE 'video/%' AND ${AttachmentTable.REMOTE_INCREMENTAL_DIGEST} IS NOT NULL) OR (${AttachmentTable.THUMBNAIL_FILE} IS NOT NULL)) AND
         ${AttachmentTable.CONTENT_TYPE} NOT LIKE 'image/svg%' AND 
         (${AttachmentTable.CONTENT_TYPE} LIKE 'image/%' OR ${AttachmentTable.CONTENT_TYPE} LIKE 'video/%') AND
-        ${MessageTable.LINK_PREVIEWS} IS NULL AND
-        ${MessageTable.SCHEDULED_DATE} < 0
+        ${MessageTable.LINK_PREVIEWS} IS NULL
+      """
+    )
+*/
+    private val GALLERY_MEDIA_QUERY = String.format(
+      BASE_MEDIA_QUERY,
+      """
+        ${AttachmentTable.DATA_FILE} IS NOT NULL AND
+        ${AttachmentTable.CONTENT_TYPE} NOT LIKE 'image/svg%' AND 
+        (${AttachmentTable.CONTENT_TYPE} LIKE 'image/%' OR ${AttachmentTable.CONTENT_TYPE} LIKE 'video/%')
+      """
+    )
+
+    private val GALLERY_MEDIA_QUERY_INCLUDING_TEMP_VIDEOS = String.format(
+      BASE_MEDIA_QUERY,
+      """
+        (${AttachmentTable.DATA_FILE} IS NOT NULL OR (${AttachmentTable.CONTENT_TYPE} LIKE 'video/%' AND ${AttachmentTable.REMOTE_INCREMENTAL_DIGEST} IS NOT NULL)) AND
+        ${AttachmentTable.CONTENT_TYPE} NOT LIKE 'image/svg%' AND 
+        (${AttachmentTable.CONTENT_TYPE} LIKE 'image/%' OR ${AttachmentTable.CONTENT_TYPE} LIKE 'video/%')
       """
     )
 */
@@ -151,8 +168,7 @@ class MediaTable internal constructor(context: Context?, databaseHelper: SignalD
       """
         ${AttachmentTable.DATA_FILE} IS NOT NULL AND
         ${AttachmentTable.CONTENT_TYPE} NOT LIKE 'text/x-signal-plain' AND
-        ${MessageTable.LINK_PREVIEWS} IS NULL AND
-        ${MessageTable.SCHEDULED_DATE} < 0
+        ${MessageTable.LINK_PREVIEWS} IS NULL
       """
     )
 */
