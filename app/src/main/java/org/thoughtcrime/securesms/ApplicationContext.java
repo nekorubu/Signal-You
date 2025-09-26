@@ -205,7 +205,6 @@ public class ApplicationContext extends Application implements AppForegroundObse
               .addNonBlocking(AppDependencies::getBillingApi)
               .addNonBlocking(this::ensureProfileUploaded)
               .addNonBlocking(() -> AppDependencies.getExpireStoriesManager().scheduleIfNecessary())
-              .addNonBlocking(BackupRepository::maybeFixAnyDanglingUploadProgress)
               .addPostRender(() -> AppDependencies.getDeletedCallEventManager().scheduleIfNecessary())
               .addPostRender(() -> RateLimitUtil.retryAllRateLimitedMessages(this))
               .addPostRender(this::initializeExpiringMessageManager)
@@ -381,7 +380,7 @@ public class ApplicationContext extends Application implements AppForegroundObse
   }
 
   public void initializeMessageRetrieval() {
-    SignalExecutors.UNBOUNDED.execute(AppDependencies::startNetwork);
+    AppDependencies.startNetwork();
   }
 
   @VisibleForTesting
