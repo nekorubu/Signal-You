@@ -589,12 +589,13 @@ class GroupsV2StateProcessor private constructor(
           .firstOrNull { it.revision == revisionJoinedAt }
 
         val addedBy = ServiceId.parseOrNull(addedAtChange?.editorServiceIdBytes)?.let { Recipient.externalPush(it) }
+        val mayAdd: Boolean = if (SignalStore.account.isLinkedDevice) !addedBy!!.isBlocked else mayThisPersonAddYouToAGroup(addedBy!!) // JW: for linked devices, fall back to Signal default to prevent unexpected group leaves
 
         if (addedBy != null) {
           Log.i(TAG, "Added as a full member of $groupId by ${addedBy.id}")
 
-          // JW: changed logic with more options
-          if (!mayThisPersonAddYouToAGroup(addedBy) && (previousGroupState == null || !DecryptedGroupUtil.isRequesting(previousGroupState, aci))) {
+          // JW: changed logic with more options but not for linked device, otherwise auto leave will always be triggered
+          if (!mayAdd && (previousGroupState == null || !DecryptedGroupUtil.isRequesting(previousGroupState, aci))) {
             Log.i(TAG, "Added by a blocked user. Leaving group.")
             AppDependencies.jobManager.add(LeaveGroupV2Job(groupId))
             return
@@ -613,9 +614,10 @@ class GroupsV2StateProcessor private constructor(
         }
       } else if (selfAsPending != null) {
         val addedBy = UuidUtil.fromByteStringOrNull(selfAsPending.addedByAci)?.let { Recipient.externalPush(ACI.from(it)) }
+        val mayAdd: Boolean = if (SignalStore.account.isLinkedDevice) (addedBy?.isBlocked == true) else mayThisPersonAddYouToAGroup(addedBy!!) // JW
 
-        if (!mayThisPersonAddYouToAGroup(addedBy!!)) { // JW: replaced blocked by more general permission
-          Log.i(TAG, "Added to group $groupId by a blocked user ${addedBy.id}. Leaving group.")
+        if (!mayAdd) { // JW: replaced blocked by more general permission
+          Log.i(TAG, "Added to group $groupId by a blocked user ${addedBy!!.id}. Leaving group.")
           AppDependencies.jobManager.add(LeaveGroupV2Job(groupId))
           return
         } else {
@@ -736,6 +738,7 @@ class GroupsV2StateProcessor private constructor(
 
       val serviceIds = SignalStore.account.getServiceIds()
       val outgoing = editor.isEmpty || aci == editor.get()
+      val extraCheck: Boolean = if (SignalStore.account.isLinkedDevice) true else (!TextSecurePreferences.whoCanAddYouToGroups(AppDependencies.application).equals("nonblocked") || !Recipient.resolved(RecipientId.from(editor.get())).isBlocked) // JW
 
       val updateDescription = GV2UpdateDescription(
         gv2ChangeDescription = decryptedGroupV2Context,
@@ -762,7 +765,7 @@ class GroupsV2StateProcessor private constructor(
         } catch (e: MmsException) {
           Log.w(TAG, "Failed to insert outgoing update message!", e)
         }
-      } else if (!TextSecurePreferences.whoCanAddYouToGroups(AppDependencies.application).equals("nonblocked") || !Recipient.resolved(RecipientId.from(editor.get())).isBlocked) { // JW: don't store messages from blocked contacts
+      } else if (extraCheck) { // JW: don't store messages from blocked contacts but only if non-linked device
         try {
           val isGroupAdd = updateDescription
             .groupChangeUpdate!!
